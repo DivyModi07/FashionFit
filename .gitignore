@@ -1,0 +1,59 @@
+#####################
+# Python / Django
+#####################
+*.py[cod]
+__pycache__/
+*.sqlite3
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.db-journal
+media/
+staticfiles/
+.env
+*.env
+.env.*
+
+# Django migrations
+**/migrations/
+!*/migrations/__init__.py
+
+# Virtual environment
+venv/
+env/
+
+#####################
+# React / Node / Tailwind
+#####################
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.env
+frontend/.next/
+frontend/.cache/
+frontend/yarn.lock
+frontend/package-lock.json
+
+#####################
+# ML / Models
+#####################
+*.pt
+*.pth
+*.h5
+*.ckpt
+*.tflite
+models/
+checkpoints/
+
+#####################
+# OS / IDE files
+#####################
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.bak
+*.tmp
