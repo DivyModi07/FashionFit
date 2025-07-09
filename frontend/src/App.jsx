@@ -1,21 +1,23 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Landing from './pages/Landing';
+import Login from './pages/Login';
+import Signup from './pages/Signup'
+import Homepage from './pages/Homepage';
+import ForgotPassword from './pages/ForgotPassword';
 
-function App() {
-  const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    axios.get("http://127.0.0.1:8000/users/hello-api/")
-      .then(response => setMessage(response.data.message))
-      .catch(error => setMessage("Error: " + error.message));
-  }, []);
 
+const App = () => {
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold">Django + React Test</h1>
-      <p className="mt-4">{message}</p>
-    </div>
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/homepage" element={<Homepage />} />
+      <Route path="/forgotpassword" element={<ForgotPassword />} />
+    </Routes>
   );
-}
+};
 
 export default App;
