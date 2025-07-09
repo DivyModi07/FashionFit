@@ -32,6 +32,9 @@ DEBUG = config('DEBUG', cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
 
+AUTH_USER_MODEL = 'users.CustomUser'
+
+
 
 
 # Application definition
@@ -46,7 +49,15 @@ INSTALLED_APPS = [
     'users',
     'rest_framework',
     'corsheaders',
+    'rest_framework_simplejwt',
+    'products',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -90,6 +101,16 @@ WSGI_APPLICATION = 'fashion_backend.wsgi.application'
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+
+# Email configuration (using Gmail SMTP as example)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'divymodi1235@gmail.com'
+EMAIL_HOST_PASSWORD = 'huqc cfhv lzpr nmjm'  # Not your regular Gmail password!
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
 
 DATABASES = {
     'default': {
@@ -144,3 +165,13 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = 'None'
+
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # ✅ Vite dev server
+]
+
+CORS_ALLOW_CREDENTIALS = True
