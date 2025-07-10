@@ -16,9 +16,9 @@ import {
   Grid,
   List
 } from 'lucide-react';
-import Navbar from './components/Navbar.jsx'
-import Footer from './components/Footer.jsx'
-import Animation from './components/Animation.jsx'
+import Navbar from '../components/Navbar.jsx'
+import Footer from '../components/Footer.jsx'
+import Animation from '../components/Animation.jsx'
 
 const Homepage = () => {
   const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
