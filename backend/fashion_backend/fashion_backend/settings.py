@@ -117,7 +117,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'FashionFit_db',
         'USER': 'postgres',
-        'PASSWORD': 'DivyModi_12',
+        'PASSWORD': 'jenil@12',
         'HOST': 'localhost',
         'PORT': '5432',
     }
