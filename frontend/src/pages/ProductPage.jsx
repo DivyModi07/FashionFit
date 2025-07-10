@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
 import { Search, Heart, ShoppingCart, Filter, Grid, List, Star, X, Plus, Eye, ArrowUpDown, Camera } from "lucide-react"
 import ProductDetails from "./ProductDetails.jsx"
-import Navbar from './Navbar.jsx'
-import Footer from './Footer.jsx'
-import Animation from './Animation.jsx'
+import Navbar from '../components/Navbar.jsx'
+import Footer from '../components/Footer.jsx'
+import Animation from '../components/Animation.jsx'
 
 
 const ProductPage = () => {
