@@ -11,6 +11,10 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CustomTokenObtainPairSerializer
+from django.utils import timezone
+
 User = get_user_model()
 
 
@@ -52,10 +56,15 @@ def send_otp_email(request):
             if not email:
                 return JsonResponse({"error": "Email is required"}, status=400)
 
+            # Check if email exists in the database
+            if not User.objects.filter(email=email).exists():
+                return JsonResponse({"error": "Email does not exist"}, status=404)
+
             otp = random.randint(100000, 999999)
 
             request.session['otp'] = str(otp)
             request.session['email'] = email
+            request.session['otp_time'] = timezone.now().isoformat()  # Store OTP generation time
 
             subject = "Your OTP for Password Reset"
             message = f"Your OTP is {otp}. It will expire in 10 minutes."
@@ -79,9 +88,20 @@ def verify_otp(request):
 
             stored_email = request.session.get('email')
             stored_otp = request.session.get('otp')
+            stored_otp_time = request.session.get('otp_time')
 
-            if not stored_email or not stored_otp:
+            if not stored_email or not stored_otp or not stored_otp_time:
                 return JsonResponse({"error": "Session expired or OTP not sent."}, status=400)
+
+            # Check OTP expiry (10 minutes)
+            otp_time = timezone.datetime.fromisoformat(stored_otp_time)
+            now = timezone.now()
+            if (now - otp_time).total_seconds() > 600:  # 600 seconds = 10 minutes
+                # Clear expired OTP from session
+                del request.session["otp"]
+                del request.session["email"]
+                del request.session["otp_time"]
+                return JsonResponse({"error": "OTP has expired. Please request a new one."}, status=400)
 
             if email != stored_email:
                 return JsonResponse({"error": "Email mismatch."}, status=400)
@@ -92,6 +112,7 @@ def verify_otp(request):
             # ✅ Valid OTP, optional: clear session
             del request.session["otp"]
             del request.session["email"]
+            del request.session["otp_time"]
 
             return JsonResponse({"message": "OTP verified successfully"})
 
@@ -125,4 +146,8 @@ def reset_password(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
