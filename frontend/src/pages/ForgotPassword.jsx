@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { sendOtpToEmail, verifyOtp, resetPassword } from '../api/auth';
 import { useState, useEffect } from "react"
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Shield, CheckCircle, RotateCcw, Clock } from "lucide-react"
+import Animation from '../components/Animation';
 
 const ForgotPassword = () => {
 
@@ -142,10 +143,19 @@ const ForgotPassword = () => {
             }));
             return;
           }
-          // Call the function to send OTP
-          sendOtpToEmail(formData.email);  // ✅ pass email
-          alert("Verification code sent to your "+ formData.email);
-          setCurrentStep(2)
+
+          // Call the function to send OTP and handle result
+          const res = await sendOtpToEmail(formData.email);
+          if (res.success) {
+            alert("Verification code sent to your " + formData.email);
+            setCurrentStep(2);
+          } else {
+            setErrors((prev) => ({
+              ...prev,
+              email: res.error || "Failed to send verification code"
+            }));
+            alert(res.error || "Failed to send verification code");
+          }
 
         } else if (currentStep === 2) {
             try {
@@ -173,6 +183,7 @@ const ForgotPassword = () => {
           if (res.message) {
             setCurrentStep(4); // success
             alert("Password reset successful!");
+            navigate('/login');
           } else {
             alert("Error: " + (res.error || "Password reset failed"));
           }
@@ -222,21 +233,7 @@ const ForgotPassword = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 overflow-hidden">
-      {/* Floating particles animation */}
-      <div className="fixed inset-0 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-purple-300 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animation: `float ${3 + Math.random() * 4}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 2}s`,
-            }}
-          />
-        ))}
-      </div>
+      <Animation count={25} />
 
       {/* Custom animations */}
       <style jsx>{`

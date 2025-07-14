@@ -18,6 +18,7 @@ import {
   Camera,
   Shirt
 } from 'lucide-react';
+import Animation from '../components/Animation';
 
 const Signup = () => {
 
@@ -174,6 +175,7 @@ const Signup = () => {
     if (res.ok) {
       alert("Signup successful! 🎉");
       console.log("Backend response:", data);
+      navigate('/login');
     } else {
       alert(`Signup failed! ❌ ${JSON.stringify(data)}`);
 
@@ -201,20 +203,7 @@ const Signup = () => {
 
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100">
       
-      <div className="fixed inset-0 pointer-events-none">
-        {[...Array(15)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-purple-300 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animation: `float ${3 + Math.random() * 4}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 2}s`,
-            }}
-          />
-        ))}
-      </div>
+      <Animation count={25} />
 
       {/* Custom animations */}
       <style jsx>{`

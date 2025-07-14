@@ -3,6 +3,7 @@ import { loginUser } from "../api/auth";
 import { useState, useEffect } from "react"
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Facebook, Twitter, Instagram, ArrowRight, User, Sparkles } from "lucide-react"
+import Animation from '../components/Animation';
 
 const Login= () => {
 
@@ -85,7 +86,7 @@ const Login= () => {
 
     if (result.success) {
       alert("✅ Login successful!");
-      // Navigate to dashboard
+      navigate('/Homepage'); // Navigate to homepage (Landing page)
     } else {
       setErrors({ email: result.error, password: "" });
       alert("❌ " + result.error);
@@ -119,20 +120,7 @@ const Login= () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 overflow-hidden">
       {/* Floating particles animation */}
-      <div className="fixed inset-0 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-purple-300 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animation: `float ${3 + Math.random() * 4}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 2}s`,
-            }}
-          />
-        ))}
-      </div>
+      <Animation count={25} />
 
       {/* Custom animations */}
       <style jsx>{`
@@ -520,3 +508,4 @@ export default Login
 // };
 
 // export default Login;
+
