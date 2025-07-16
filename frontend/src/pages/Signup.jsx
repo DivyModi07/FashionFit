@@ -20,6 +20,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import Animation from '../components/Animation';
+import toast from 'react-hot-toast';
 
 const Signup = () => {
 
@@ -125,7 +126,7 @@ const Signup = () => {
       setCurrentStep(currentStep + 1); // move to next step
     } catch (err) {
       console.error("Validation failed:", err);
-      alert("Server error while checking email/phone.");
+      toast.error("Server error while checking email/phone.");
     }
   } else {
     if (validateStep(currentStep)) {
@@ -174,16 +175,16 @@ const Signup = () => {
     const data = await res.json();
 
     if (res.ok) {
-      alert("Signup successful! 🎉");
+      toast.success("Signup successful! 🎉");
       console.log("Backend response:", data);
       navigate('/login');
     } else {
-      alert(`Signup failed! ❌ ${JSON.stringify(data)}`);
+      toast.error(`Signup failed! ${JSON.stringify(data)}`);
 
     }
 
   } catch (error) {
-    alert("Server error. Try again later.");
+    toast.error("Server error. Try again later.");
     console.error("Request failed:", error);
   }
 };
@@ -191,7 +192,7 @@ const Signup = () => {
 
   const handleSocialSignup = (provider) => {
     console.log(`Signing up with ${provider}`);
-    // Implement social signup logic
+    toast(`${provider} signup clicked`);
   };
 
   const stepTitles = [
