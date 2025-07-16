@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Facebook, Twitter, Instagram, ArrowRight, User, Sparkles } from "lucide-react"
 import Animation from '../components/Animation';
+import toast from 'react-hot-toast';
 
 const Login= () => {
 
@@ -85,11 +86,11 @@ const Login= () => {
     const result = await loginUser(formData.email, formData.password);
 
     if (result.success) {
-      alert("✅ Login successful!");
+      toast.success("Login successful!");
       navigate('/Homepage'); // Navigate to homepage (Landing page)
     } else {
       setErrors({ email: result.error, password: "" });
-      alert("❌ " + result.error);
+      toast.error(result.error);
     }
 
     setIsLoading(false);
@@ -99,17 +100,17 @@ const Login= () => {
 
   const handleSocialLogin = (provider) => {
     console.log(`Login with ${provider}`)
-    alert(`${provider} login clicked`)
+    toast(`${provider} login clicked`)
   }
 
   const handleSignUp = () => {
     console.log("Navigate to sign up")
-    alert("Navigate to sign up page")
+    toast("Navigate to sign up page")
   }
 
   const handleGuestLogin = () => {
     console.log("Continue as guest")
-    alert("Continue as guest")
+    toast("Continue as guest")
   }
 
   return (
