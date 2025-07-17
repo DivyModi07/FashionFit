@@ -4,7 +4,7 @@ import ProductDetails from "./ProductDetails.jsx"
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import Animation from '../components/Animation.jsx'
-
+import axios from "axios";
 
 const ProductPage = () => {
   const [isVisible, setIsVisible] = useState({})
@@ -24,7 +24,7 @@ const ProductPage = () => {
     brand: [],
     size: [],
     color: [],
-    priceRange: [0, 1000],
+    priceRange: [0, 10000], 
     rating: 0,
     discount: 0,
   })
@@ -33,7 +33,7 @@ const ProductPage = () => {
     brand: [],
     size: [],
     color: [],
-    priceRange: [0, 1000],
+    priceRange: [0, 10000],
     rating: 0,
     discount: 0,
   })
@@ -47,124 +47,118 @@ const ProductPage = () => {
   })
   const [searchQuery, setSearchQuery] = useState("")
   const [imageSearchFile, setImageSearchFile] = useState(null)
+const [products,setProducts]=useState([])
 
-  // Mock product data
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "AI-Recommended Summer Dress",
-      brand: "FashionAI",
-      price: 89.99,
-      originalPrice: 129.99,
-      discount: 31,
-      rating: 4.8,
-      reviews: 124,
-      image:
-        "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      category: "Women",
-      sizes: ["S", "M", "L", "XL"],
-      colors: ["Blue", "Pink", "White"],
-      isWishlisted: false,
-      isNew: true,
-      description: "Perfect summer dress with AI-curated style recommendations",
-    },
-    {
-      id: 2,
-      name: "Smart Casual Blazer",
-      brand: "StyleTech",
-      price: 159.99,
-      originalPrice: 199.99,
-      discount: 20,
-      rating: 4.6,
-      reviews: 89,
-      image:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      category: "Men",
-      sizes: ["M", "L", "XL", "XXL"],
-      colors: ["Navy", "Black", "Gray"],
-      isWishlisted: true,
-      isNew: false,
-      description: "Professional blazer with smart fit technology",
-    },
-    {
-      id: 3,
-      name: "Kids Adventure Sneakers",
-      brand: "PlayTech",
-      price: 49.99,
-      originalPrice: 69.99,
-      discount: 29,
-      rating: 4.9,
-      reviews: 156,
-      image: "https://images.unsplash.com/photo-1544966503-7cc5ac882d5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      category: "Kids",
-      sizes: ["28", "30", "32", "34"],
-      colors: ["Red", "Blue", "Green"],
-      isWishlisted: false,
-      isNew: true,
-      description: "Durable sneakers designed for active kids",
-    },
-    {
-      id: 4,
-      name: "Luxury Handbag Collection",
-      brand: "EliteStyle",
-      price: 299.99,
-      originalPrice: 399.99,
-      discount: 25,
-      rating: 4.7,
-      reviews: 67,
-      image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      category: "Accessories",
-      sizes: ["One Size"],
-      colors: ["Black", "Brown", "Beige"],
-      isWishlisted: false,
-      isNew: false,
-      description: "Premium leather handbag with timeless design",
-    },
-    {
-      id: 5,
-      name: "Athletic Performance Shoes",
-      brand: "SportAI",
-      price: 119.99,
-      originalPrice: 149.99,
-      discount: 20,
-      rating: 4.5,
-      reviews: 203,
-      image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      category: "Footwear",
-      sizes: ["7", "8", "9", "10", "11"],
-      colors: ["White", "Black", "Blue"],
-      isWishlisted: true,
-      isNew: false,
-      description: "High-performance athletic shoes with AI-optimized comfort",
-    },
-    {
-      id: 6,
-      name: "Elegant Evening Gown",
-      brand: "GlamourTech",
-      price: 249.99,
-      originalPrice: 349.99,
-      discount: 29,
-      rating: 4.9,
-      reviews: 45,
-      image:
-        "https://images.unsplash.com/photo-1566479179817-c0b5b4b4b1e5?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      category: "Women",
-      sizes: ["XS", "S", "M", "L"],
-      colors: ["Black", "Navy", "Burgundy"],
-      isWishlisted: false,
-      isNew: true,
-      description: "Stunning evening gown for special occasions",
-    },
-  ])
+// Dynamically generate unique types from products for category filter
+const availableTypes = Array.from(new Set(products.map(p => p.type).filter(Boolean))).sort();
 
+// Place filteredAndSortedProducts here so it is defined before useEffect
+const filteredAndSortedProducts = products
+  .filter((product) => {
+    // Search query filter
+    if (
+      searchQuery &&
+      !product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !product.brand.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !product.description.toLowerCase().includes(searchQuery.toLowerCase())
+    ) {
+      console.log("Filtered by search:", product);
+      return false;
+    }
+    // Category filter (now type)
+    if (appliedFilters.category.length > 0 && !appliedFilters.category.includes(product.type)) {
+      console.log("Filtered by type:", product, "applied:", appliedFilters.category, "product:", product.type);
+      return false;
+    }
+    // Brand filter
+    if (appliedFilters.brand.length > 0 && !appliedFilters.brand.includes(product.brand)) {
+      console.log("Filtered by brand:", product, "applied:", appliedFilters.brand, "product:", product.brand);
+      return false;
+    }
+    // Price range filter
+    if (product.initialPrice < appliedFilters.priceRange[0] || product.initialPrice > appliedFilters.priceRange[1]) {
+      console.log("Filtered by price:", product, "applied:", appliedFilters.priceRange, "product:", product.initialPrice);
+      return false;
+    }
+    // Rating filter
+    if (product.rating < appliedFilters.rating) {
+      console.log("Filtered by rating:", product, "applied:", appliedFilters.rating, "product:", product.rating);
+      return false;
+    }
+    // Discount filter
+    if (product.discount < appliedFilters.discount) {
+      console.log("Filtered by discount:", product, "applied:", appliedFilters.discount, "product:", product.discount);
+      return false;
+    }
+    return true;
+  })
+  .sort((a, b) => {
+    switch (sortBy) {
+      case "price-low":
+        return a.initialPrice - b.initialPrice
+      case "price-high":
+        return b.initialPrice - a.initialPrice
+      case "rating":
+        return b.rating - a.rating
+      case "newest":
+        return b.isNew - a.isNew
+      default:
+        return b.reviews - a.reviews // popularity
+    }
+  });
+
+useEffect(() => {
+    axios.get('http://127.0.0.1:8000/products/all/')
+      .then(res => {
+        console.log("✅ DATA FROM API:", res.data);
+        const mapped = res.data.map((item, index) => {
+          // Extract type from short_description (last word, lowercased)
+          let type = '';
+          if (item.short_description) {
+            const words = item.short_description.trim().split(' ');
+            type = words.length > 0 ? words[words.length - 1].toLowerCase() : '';
+          }
+          return {
+            id: item.id || index,
+            name: item.short_description || "No name",
+            brand: item.brand_name,
+            finalPrice: Number(item.final_price) || 0,
+            initialPrice: Number(item.initial_price) || 0,
+            isOnSale: !!item.is_on_sale,
+            discount: item.is_on_sale ? parseInt(item.discount_label?.replace('% Off', '') || "0", 10) : 0,
+            merchandiseLabel: item.merchandise_label || "",
+            rating: 4.5, // Default rating since API doesn't provide
+            reviews: Math.floor(Math.random() * 50) + 10, // Random reviews count
+            reviewList: [], // Empty array since API doesn't provide
+            image: item.model_image || "/placeholder.png",
+            modelImage: item.model_image,
+            cutoutImage: item.cutout_image,
+            description: item.short_description || "",
+            type, // new type field
+            currency: item.currency || "USD",
+            isWishlisted: false,
+            stock: Number(item.stock_total) || 0,
+            isCustomizable: !!item.is_customizable,
+            brand_id: item.brand_id,
+            merchant_id: item.merchant_id,
+            product_id: item.product_id,
+          };
+        });
+        console.log("✅ MAPPED PRODUCTS:", mapped);
+        setProducts(mapped);
+      })
+      .catch(err => console.error("❌ Failed to fetch products:", err));
+  }, []);
+
+  
   // Filter options
-  const filterOptions = {
-    categories: ["Men", "Women", "Kids", "Footwear", "Accessories"],
-    brands: ["FashionAI", "StyleTech", "PlayTech", "EliteStyle", "SportAI", "GlamourTech"],
-    sizes: ["XS", "S", "M", "L", "XL", "XXL", "7", "8", "9", "10", "11", "28", "30", "32", "34"],
-    colors: ["Black", "White", "Blue", "Red", "Pink", "Navy", "Gray", "Brown", "Green", "Beige", "Burgundy"],
-    discounts: [10, 20, 30, 50],
-  }
+// Filter options - Updated to match API data
+const filterOptions = {
+  categories: availableTypes, // now types like dress, sandals, etc.
+  sizes: ["XS", "S", "M", "L", "XL", "XXL", "One Size", "7", "8", "9", "10", "11", "28", "30", "32", "34"],
+  colors: ["Black", "White", "Blue", "Red", "Pink", "Navy", "Gray", "Brown", "Green", "Beige", "Burgundy"],
+  discounts: [10, 20, 30, 50],
+}
 
   // Intersection Observer for animations
   useEffect(() => {
@@ -186,7 +180,7 @@ const ProductPage = () => {
     elements.forEach((el) => observer.observe(el))
 
     return () => observer.disconnect()
-  }, [])
+  }, [filteredAndSortedProducts]) // <-- add dependency so observer runs after products change
 
   // Handle filter changes
   const handleFilterChange = (filterType, value) => {
@@ -254,55 +248,6 @@ const ProductPage = () => {
     setShowFilters(false)
   }
 
-  // Filter and sort products using appliedFilters instead of filters
-  const filteredAndSortedProducts = products
-    .filter((product) => {
-      // Search query filter
-      if (
-        searchQuery &&
-        !product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !product.brand.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !product.description.toLowerCase().includes(searchQuery.toLowerCase())
-      ) {
-        return false
-      }
-      // Category filter
-      if (appliedFilters.category.length > 0 && !appliedFilters.category.includes(product.category)) {
-        return false
-      }
-      // Brand filter
-      if (appliedFilters.brand.length > 0 && !appliedFilters.brand.includes(product.brand)) {
-        return false
-      }
-      // Price range filter
-      if (product.price < appliedFilters.priceRange[0] || product.price > appliedFilters.priceRange[1]) {
-        return false
-      }
-      // Rating filter
-      if (product.rating < appliedFilters.rating) {
-        return false
-      }
-      // Discount filter
-      if (product.discount < appliedFilters.discount) {
-        return false
-      }
-      return true
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "price-low":
-          return a.price - b.price
-        case "price-high":
-          return b.price - a.price
-        case "rating":
-          return b.rating - a.rating
-        case "newest":
-          return b.isNew - a.isNew
-        default:
-          return b.reviews - a.reviews // popularity
-      }
-    })
-
   // Handle image search
   const handleImageSearch = (event) => {
     const file = event.target.files[0]
@@ -323,7 +268,7 @@ const ProductPage = () => {
       <Animation />
 
       {/* Custom animations */}
-      <style jsx>{`
+      <style >{`
         
         @keyframes fadeInUp {
           from { transform: translateY(30px); opacity: 0; }
@@ -391,7 +336,7 @@ const ProductPage = () => {
                           brand: [],
                           size: [],
                           color: [],
-                          priceRange: [0, 1000],
+                          priceRange: [0, 10000], 
                           rating: 0,
                           discount: 0,
                         })
@@ -400,7 +345,7 @@ const ProductPage = () => {
                           brand: [],
                           size: [],
                           color: [],
-                          priceRange: [0, 1000],
+                          priceRange: [0, 10000], // increased upper bound
                           rating: 0,
                           discount: 0,
                         })
@@ -419,8 +364,8 @@ const ProductPage = () => {
                 </div>
               </div>
 
-              {/* Filter Content */}
-              <div>
+              {/* Filter Content - make this scrollable if content is long */}
+              <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
                 {/* Category Filter - Now Collapsible */}
                 <div className="border-b border-gray-100">
                   <button
@@ -443,7 +388,7 @@ const ProductPage = () => {
                     <div className="px-6 pb-6">
                       <div className="space-y-3">
                         {filterOptions.categories.map((category) => {
-                          const count = products.filter((p) => p.category === category).length
+                          const count = products.filter((p) => p.type === category).length
                           return (
                             <label key={category} className="flex items-center justify-between cursor-pointer group">
                               <div className="flex items-center">
@@ -454,7 +399,7 @@ const ProductPage = () => {
                                   className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 focus:ring-2"
                                 />
                                 <span className="ml-3 text-gray-700 group-hover:text-gray-900 transition-colors duration-200">
-                                  {category}
+                                  {category.charAt(0).toUpperCase() + category.slice(1)}
                                 </span>
                               </div>
                               <span className="text-gray-400 text-sm">({count})</span>
@@ -488,7 +433,7 @@ const ProductPage = () => {
                   {isFiltersExpanded.brand && (
                     <div className="px-6 pb-6">
                       <div className="space-y-3">
-                        {filterOptions.brands.map((brand) => {
+                        {availableBrands.map((brand) => {
                           const count = products.filter((p) => p.brand === brand).length
                           return (
                             <label key={brand} className="flex items-center justify-between cursor-pointer group">
@@ -500,7 +445,7 @@ const ProductPage = () => {
                                   className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 focus:ring-2"
                                 />
                                 <span className="ml-3 text-gray-700 group-hover:text-gray-900 transition-colors duration-200">
-                                  {brand}
+                                  {brand.charAt(0).toUpperCase() + brand.slice(1)}
                                 </span>
                               </div>
                               <span className="text-gray-400 text-sm">({count})</span>
@@ -632,7 +577,7 @@ const ProductPage = () => {
                   appliedFilters.color.length > 0 ||
                   appliedFilters.rating > 0 ||
                   appliedFilters.discount > 0 ||
-                  appliedFilters.priceRange[1] < 1000) && (
+                  appliedFilters.priceRange[1] < 10000) && (
                   <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
                     <span className="text-sm text-gray-600 font-medium">Active filters:</span>
 
@@ -641,7 +586,7 @@ const ProductPage = () => {
                         key={category}
                         className="inline-flex items-center gap-1 bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs"
                       >
-                        {category}
+                        {category.charAt(0).toUpperCase() + category.slice(1)}
                         <button
                           onClick={() => {
                             const newFilters = {
@@ -663,7 +608,7 @@ const ProductPage = () => {
                         key={brand}
                         className="inline-flex items-center gap-1 bg-pink-100 text-pink-800 px-2 py-1 rounded-full text-xs"
                       >
-                        {brand}
+                        {brand.charAt(0).toUpperCase() + brand.slice(1)}
                         <button
                           onClick={() => {
                             const newFilters = {
@@ -680,12 +625,12 @@ const ProductPage = () => {
                       </span>
                     ))}
 
-                    {appliedFilters.priceRange[1] < 1000 && (
+                    {appliedFilters.priceRange[1] < 10000 && (
                       <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
                         Under ${appliedFilters.priceRange[1]}
                         <button
                           onClick={() => {
-                            const newFilters = { ...appliedFilters, priceRange: [0, 1000] }
+                            const newFilters = { ...appliedFilters, priceRange: [0, 10000] }
                             setAppliedFilters(newFilters)
                             setFilters(newFilters)
                           }}
@@ -750,32 +695,32 @@ const ProductPage = () => {
                 >
                   {viewMode === "grid" ? (
                     // Grid View Card
-                    <div className="bg-white/80 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group">
+                    <div
+                      className="bg-white/80 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 group min-h-[380px] flex flex-col cursor-pointer"
+                      onClick={() => handleSeeProduct(product)}
+                    >
                       <div className="relative overflow-hidden">
                         <img
                           src={product.image || "/placeholder.svg"}
                           alt={product.name}
                           className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
                         />
-
-                        {/* Badges */}
-                        <div className="absolute top-3 left-3 flex flex-col gap-2">
-                          {product.isNew && (
-                            <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                              New
-                            </span>
-                          )}
-                          {product.discount > 0 && (
-                            <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                              -{product.discount}%
-                            </span>
-                          )}
-                        </div>
-
+                        {/* Merchandise Label Badge */}
+                        {product.merchandiseLabel && (
+                          <span className="absolute top-3 left-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg z-10">
+                            {product.merchandiseLabel}
+                          </span>
+                        )}
+                        {/* Discount Badge (only if on sale) */}
+                        {product.isOnSale && product.discount > 0 && (
+                          <span className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
+                            -{product.discount}%
+                          </span>
+                        )}
                         {/* Quick Actions */}
-                        <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="absolute bottom-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
                           <button
-                            onClick={() => toggleWishlist(product.id)}
+                            onClick={e => { e.stopPropagation(); toggleWishlist(product.id); }}
                             className={`p-2 rounded-full backdrop-blur-md transition-all duration-300 transform hover:scale-110 ${
                               product.isWishlisted
                                 ? "bg-red-500 text-white"
@@ -795,7 +740,10 @@ const ProductPage = () => {
                         {/* Add to Cart Button */}
                         <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <button
-                            onClick={() => handleAddToCart(product.id)}
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleAddToCart(product.id, { price: product.isOnSale ? product.finalPrice : product.initialPrice });
+                            }}
                             className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 px-4 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2"
                           >
                             <ShoppingCart className="w-4 h-4" />
@@ -804,30 +752,33 @@ const ProductPage = () => {
                         </div>
                       </div>
 
-                      <div className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                            <span className="text-sm text-gray-600">{product.rating}</span>
-                            <span className="text-sm text-gray-400">({product.reviews})</span>
-                          </div>
-                        </div>
-
+                      <div className="p-4 flex-1 flex flex-col">
+                        {/* Brand name below image */}
                         <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors duration-300">
-                          {product.name}
+                          {product.brand.charAt(0).toUpperCase() + product.brand.slice(1)}
                         </h3>
-
+                        {/* Description below brand */}
                         <p className="text-sm text-gray-600 mb-3">{product.description}</p>
-
+                        {/* Price below description */}
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <span className="text-lg font-bold text-gray-900">${product.price}</span>
-                            {product.originalPrice > product.price && (
-                              <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
+                            {product.isOnSale ? (
+                              <>
+                                <span className="text-lg font-bold text-red-600">${product.finalPrice}</span>
+                                <span className="text-sm text-gray-500 line-through">${product.initialPrice}</span>
+                              </>
+                            ) : (
+                              <span className="text-lg font-bold text-gray-900">${product.initialPrice}</span>
                             )}
                           </div>
                         </div>
-
+                        {/* Buy Now Button */}
+                        <button
+                          className="mt-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 px-4 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 font-medium"
+                          onClick={e => { e.stopPropagation(); /* Add buy now logic here */ }}
+                        >
+                          Buy Now
+                        </button>
                       </div>
                     </div>
                   ) : (
@@ -970,7 +921,7 @@ const ProductPage = () => {
                         brand: [],
                         size: [],
                         color: [],
-                        priceRange: [0, 1000],
+                        priceRange: [0, 10000], // increased upper bound
                         rating: 0,
                         discount: 0,
                       })
@@ -991,7 +942,7 @@ const ProductPage = () => {
         product={selectedProduct}
         isOpen={isProductDetailsOpen}
         onClose={closeProductDetails}
-        onAddToCart={handleAddToCart}
+        onAddToCart={(id, options) => handleAddToCart(id, { ...options, price: selectedProduct?.isOnSale ? selectedProduct?.finalPrice : selectedProduct?.initialPrice })}
         onToggleWishlist={toggleWishlist}
       />
 
@@ -1001,4 +952,11 @@ const ProductPage = () => {
   )
 }
 
-export default ProductPage
+export default ProductPage;
+
+
+
+
+
+
+
