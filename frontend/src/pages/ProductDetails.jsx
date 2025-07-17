@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { X, Heart, ShoppingCart, Star, Plus, Minus, Truck, Shield, RotateCcw } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { X, Heart, ShoppingCart, Star, Plus, Minus, Truck, Shield, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react"
 
 const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlist }) => {
   const [selectedSize, setSelectedSize] = useState("")
@@ -85,6 +85,18 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
     }
   }, [displayProduct.isWishlisted])
 
+  // Carousel state for images
+  const images = useMemo(() => {
+    const arr = [];
+    if (product?.modelImage) arr.push({ src: product.modelImage, label: "Model" });
+    if (product?.cutoutImage) arr.push({ src: product.cutoutImage, label: "Cutout" });
+    return arr;
+  }, [product?.modelImage, product?.cutoutImage]);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  useEffect(() => { setCarouselIndex(0); }, [images.length, product]);
+  const goToPrev = () => setCarouselIndex((prev) => (prev - 1 + images.length) % images.length);
+  const goToNext = () => setCarouselIndex((prev) => (prev + 1) % images.length);
+
   if (!isOpen) return null
 
   const handleAddToCart = () => {
@@ -135,29 +147,39 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
           {/* Hero Section */}
           <div className="relative">
             <div className="flex flex-col xl:flex-row">
-              {/* Left - Product Image */}
-              <div className="xl:w-1/2 relative">
-                <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden">
-                  <img
-                    src={displayProduct.image}
-                    alt={displayProduct.name}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-                  />
-                  
-                  {/* Floating Badges */}
-                  <div className="absolute top-6 left-6 flex flex-col gap-3">
-                    {displayProduct.isNew && (
-                      <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">
-                        ✨ New Arrival
-                      </div>
-                    )}
-                    {displayProduct.discount > 0 && (
-                      <div className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
-                        🔥 {displayProduct.discount}% OFF
-                      </div>
-                    )}
-                  </div>
-
+              {/* Left - Product Images Carousel */}
+              <div className="xl:w-1/2 relative flex flex-col items-center justify-center">
+                <div className="flex items-center justify-center w-full aspect-square bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden">
+                  {images.length > 1 && (
+                    <button
+                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full p-2 shadow hover:bg-white"
+                      onClick={goToPrev}
+                      tabIndex={0}
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft className="w-6 h-6 text-gray-700" />
+                    </button>
+                  )}
+                  {images.length > 0 ? (
+                    <img
+                      src={images[carouselIndex].src}
+                      alt={product?.name + ' ' + images[carouselIndex].label}
+                      className="w-full h-full object-cover transition-all duration-700 rounded-xl"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
+                  )}
+                  {images.length > 1 && (
+                    <button
+                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/80 rounded-full p-2 shadow hover:bg-white"
+                      onClick={goToNext}
+                      tabIndex={0}
+                      aria-label="Next image"
+                    >
+                      <ChevronRight className="w-6 h-6 text-gray-700" />
+                    </button>
+                  )}
+                  {/* Floating Badges, Wishlist Button, etc. remain unchanged */}
                   {/* Wishlist Button */}
                   <button
                     onClick={handleWishlistToggle}
@@ -169,15 +191,26 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
                   >
                     <Heart className={`w-6 h-6 transition-all duration-300 ${isWishlistToggled ? "fill-current text-white" : "hover:text-red-500"}`} />
                   </button>
+                  {/* Merchandise Label Badge */}
+                  {product?.merchandiseLabel && (
+                    <span className="absolute top-6 left-6 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg z-10">
+                      {product.merchandiseLabel}
+                    </span>
+                  )}
+                  {/* Discount Badge (only if on sale) */}
+                  {product?.isOnSale && product?.discount > 0 && (
+                    <span className="absolute top-20 left-6 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
+                      -{product.discount}%
+                    </span>
+                  )}
                 </div>
               </div>
-
               {/* Right - Product Details */}
               <div className="xl:w-1/2 p-8 xl:p-12">
                 {/* Brand & Rating */}
                 <div className="flex items-center justify-between mb-4">
                   <span className="inline-block bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-bold">
-                    {displayProduct.brand}
+                    {product?.brand}
                   </span>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center">
@@ -185,39 +218,40 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
                         <Star
                           key={i}
                           className={`w-5 h-5 ${
-                            i < Math.floor(displayProduct.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
+                            i < Math.floor(product?.rating || 0) ? "text-yellow-400 fill-current" : "text-gray-300"
                           }`}
                         />
                       ))}
                     </div>
-                    <span className="text-gray-600 font-medium">({displayProduct.reviews})</span>
+                    <span className="text-gray-600 font-medium">({product?.reviews})</span>
                   </div>
                 </div>
-
                 {/* Product Name */}
                 <h1 className="text-4xl xl:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-                  {displayProduct.name}
+                  {product?.name}
                 </h1>
-
                 {/* Description */}
                 <p className="text-gray-600 text-lg leading-relaxed mb-8">
-                  {displayProduct.description}
+                  {product?.description}
                 </p>
-
                 {/* Price Section */}
                 <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 mb-8">
                   <div className="flex items-center gap-4 mb-2">
-                    <span className="text-4xl font-bold text-gray-900">${displayProduct.price}</span>
-                    {displayProduct.originalPrice > displayProduct.price && (
-                      <span className="text-2xl text-gray-500 line-through">${displayProduct.originalPrice}</span>
+                    {product?.isOnSale ? (
+                      <>
+                        <span className="text-4xl font-bold text-red-600">${product.finalPrice}</span>
+                        <span className="text-2xl text-gray-500 line-through">${product.initialPrice}</span>
+                      </>
+                    ) : (
+                      <span className="text-4xl font-bold text-gray-900">${product.initialPrice}</span>
                     )}
                   </div>
-                  {displayProduct.discount > 0 && (
+                  {product?.isOnSale && product?.discount > 0 && (
                     <div className="flex items-center gap-3">
                       <span className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-full text-sm font-bold">
-                        Save ${(displayProduct.originalPrice - displayProduct.price).toFixed(2)}
+                        Save ${(product.initialPrice - product.finalPrice).toFixed(2)}
                       </span>
-                      <span className="text-green-600 font-bold">{displayProduct.discount}% off today!</span>
+                      <span className="text-green-600 font-bold">{product.discount}% off today!</span>
                     </div>
                   )}
                 </div>
@@ -276,7 +310,7 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
                     className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 px-8 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-3 font-bold text-lg"
                   >
                     <ShoppingCart className="w-6 h-6" />
-                    Add to Cart • ${(displayProduct.price * quantity).toFixed(2)}
+                    Add to Cart
                   </button>
                   <button className="px-8 py-4 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 font-bold text-lg">
                     Buy Now
@@ -335,30 +369,30 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-6">
                       <div className="flex justify-between items-center py-4 border-b border-gray-100">
-                        <span className="text-lg font-medium text-gray-600">Brand</span>
-                        <span className="text-lg font-bold text-gray-900">{displayProduct.brand}</span>
+                        <span className="text-lg font-medium text-gray-600">Brand Name</span>
+                        <span className="text-lg font-bold text-gray-900">{product?.brand}</span>
                       </div>
                       <div className="flex justify-between items-center py-4 border-b border-gray-100">
-                        <span className="text-lg font-medium text-gray-600">Category</span>
-                        <span className="text-lg font-bold text-gray-900">{displayProduct.category}</span>
+                        <span className="text-lg font-medium text-gray-600">Brand ID</span>
+                        <span className="text-lg font-bold text-gray-900">{product?.brand_id || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between items-center py-4 border-b border-gray-100">
-                        <span className="text-lg font-medium text-gray-600">Material</span>
-                        <span className="text-lg font-bold text-gray-900">Premium Leather</span>
+                        <span className="text-lg font-medium text-gray-600">Merchant ID</span>
+                        <span className="text-lg font-bold text-gray-900">{product?.merchant_id || 'N/A'}</span>
                       </div>
                     </div>
                     <div className="space-y-6">
                       <div className="flex justify-between items-center py-4 border-b border-gray-100">
-                        <span className="text-lg font-medium text-gray-600">Care</span>
-                        <span className="text-lg font-bold text-gray-900">Professional Clean</span>
+                        <span className="text-lg font-medium text-gray-600">In Stock</span>
+                        <span className={`text-lg font-bold ${product?.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>{product?.stock > 0 ? 'Available' : 'Not Available'}</span>
                       </div>
                       <div className="flex justify-between items-center py-4 border-b border-gray-100">
-                        <span className="text-lg font-medium text-gray-600">SKU</span>
-                        <span className="text-lg font-bold text-gray-900">#{displayProduct.id}00123</span>
+                        <span className="text-lg font-medium text-gray-600">Category</span>
+                        <span className="text-lg font-bold text-gray-900">{product?.category || product?.gender || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between items-center py-4 border-b border-gray-100">
-                        <span className="text-lg font-medium text-gray-600">Stock</span>
-                        <span className="text-lg font-bold text-green-600">✓ In Stock</span>
+                        <span className="text-lg font-medium text-gray-600">Product ID</span>
+                        <span className="text-lg font-bold text-gray-900">{product?.product_id || 'N/A'}</span>
                       </div>
                     </div>
                   </div>
@@ -372,19 +406,19 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
                     <div className="flex flex-col md:flex-row justify-between items-center gap-8">
                       <div className="text-center md:text-left">
                         <div className="flex items-center justify-center md:justify-start gap-4 mb-4">
-                          <span className="text-6xl font-bold text-gray-900">{displayProduct.rating}</span>
+                          <span className="text-6xl font-bold text-gray-900">{product?.rating}</span>
                           <div>
                             <div className="flex items-center mb-2">
                               {[...Array(5)].map((_, i) => (
                                 <Star
                                   key={i}
                                   className={`w-6 h-6 ${
-                                    i < Math.floor(displayProduct.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
+                                    i < Math.floor(product?.rating || 0) ? "text-yellow-400 fill-current" : "text-gray-300"
                                   }`}
                                 />
                               ))}
                             </div>
-                            <p className="text-gray-600 font-medium">{displayProduct.reviews} reviews</p>
+                            <p className="text-gray-600 font-medium">{product?.reviews} reviews</p>
                           </div>
                         </div>
                       </div>
