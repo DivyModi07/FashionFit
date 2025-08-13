@@ -18,22 +18,29 @@ class Command(BaseCommand):
         with open(file_path, mode='r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for i, row in enumerate(reader):
-                if i >= 20:  # Limit to first 20 rows for testing
+                if i >= 100:  # Limit to first 20 rows for testing
                     break
-                print(row) 
                 try:
                     Product.objects.create(
                         product_id=row.get('id'),
+                        available_sizes=row.get('availableSizes'),
+                        brand_id=row.get('brand.id'),
                         brand_name=row.get('brand.name'),
                         gender=row.get('gender'),
-                        description=row.get('availableSizes'),
-                        is_customizable=row.get('isCustomizable', '').lower() == 'true',
+                        has_similar=row.get('hasSimilar', '').lower() == 'true',
                         cutout_image=row.get('images.cutOut'),
                         model_image=row.get('images.model'),
+                        is_customizable=row.get('isCustomizable', '').lower() == 'true',
+                        merchandise_label=row.get('merchandiseLabel'),
+                        merchandise_labelfield=row.get('merchandiseLabelField'),
+                        merchant_id=row.get('merchantId'),
                         currency=row.get('priceInfo.currencyCode'),
-                        price=row.get('priceInfo.finalPrice') or 0,
-                        discount_label=row.get('priceInfo.discountLabel'),
+                        formatted_initial_price=row.get('priceInfo.formattedInitialPrice') or 0,
+                        formatted_final_price=row.get('priceInfo.formattedFinalPrice') or 0,
+                        initial_price=row.get('priceInfo.initialPrice') or 0,
+                        final_price=row.get('priceInfo.finalPrice') or 0,
                         is_on_sale=row.get('priceInfo.isOnSale', '').lower() == 'true',
+                        discount_label=row.get('priceInfo.discountLabel'),
                         short_description=row.get('shortDescription'),
                         stock_total=int(row.get('stockTotal') or 0)
                     )

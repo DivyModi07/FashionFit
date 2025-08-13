@@ -15,6 +15,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -37,10 +38,8 @@ class RegisterSerializer(serializers.ModelSerializer):
     
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-        email = attrs.get("email")
-        password = attrs.get("password")
-        user = authenticate(username=email, password=password)
-        if not user:
-            raise serializers.ValidationError("Invalid credentials")
-        data = super().validate({"username": user.username, "password": password})
+        data = super().validate(attrs)
+        user = self.user  # The authenticated user is set by the parent class
+        user.last_login = timezone.now()
+        user.save(update_fields=["last_login"])
         return data

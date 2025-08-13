@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { sendOtpToEmail, verifyOtp, resetPassword } from '../api/auth';
 import { useState, useEffect } from "react"
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Shield, CheckCircle, RotateCcw, Clock } from "lucide-react"
+import Animation from '../components/Animation';
+import toast from 'react-hot-toast';
 
 const ForgotPassword = () => {
 
@@ -142,10 +144,19 @@ const ForgotPassword = () => {
             }));
             return;
           }
-          // Call the function to send OTP
-          sendOtpToEmail(formData.email);  // ✅ pass email
-          alert("Verification code sent to your "+ formData.email);
-          setCurrentStep(2)
+
+          // Call the function to send OTP and handle result
+          const res = await sendOtpToEmail(formData.email);
+          if (res.success) {
+            toast.success("Verification code sent to your "+ formData.email);
+            setCurrentStep(2);
+          } else {
+            setErrors((prev) => ({
+              ...prev,
+              email: res.error || "Failed to send verification code"
+            }));
+            toast.error(res.error || "Failed to send verification code");
+          }
 
         } else if (currentStep === 2) {
             try {
@@ -153,10 +164,10 @@ const ForgotPassword = () => {
               console.log("verifyOtp response:", res);  // ✅ this is fine
 
               if (res.message) {
-                alert("Code verified successfully!");
+                toast.success("Code verified successfully!");
                 setCurrentStep(3);
               } else {
-                alert("Error: " + (res.error || "Invalid code"));
+                toast.error(res.error || "Invalid code");
                 setErrors((prev) => ({
                   ...prev,
                   verificationCode: res.error || "Invalid code"
@@ -164,7 +175,7 @@ const ForgotPassword = () => {
               }
             } catch (err) {
   console.error("verifyOtp failed:", err);
-  alert("Something went wrong: " + err.message);
+  toast.error("Something went wrong: " + err.message);
 }
           }
       else if (currentStep === 3) {
@@ -172,9 +183,10 @@ const ForgotPassword = () => {
 
           if (res.message) {
             setCurrentStep(4); // success
-            alert("Password reset successful!");
+            toast.success("Password reset successful!");
+            navigate('/login');
           } else {
-            alert("Error: " + (res.error || "Password reset failed"));
+            toast.error(res.error || "Password reset failed");
           }
         }
       }, 2000)
@@ -196,13 +208,13 @@ const ForgotPassword = () => {
       setCountdown(60)
 
       if (res.success) {
-        alert("Verification code resent to " + formData.email)
+        toast.success("Verification code resent to " + formData.email)
       } else {
-        alert("Failed to resend code: " + res.error)
+        toast.error("Failed to resend code: " + res.error)
       }
     } catch (error) {
       setIsLoading(false)
-      alert("Something went wrong: " + error.message)
+      toast.error("Something went wrong: " + error.message)
     }
   }
 }
@@ -212,31 +224,17 @@ const ForgotPassword = () => {
 
   const handleBackToLogin = () => {
     console.log("Navigate back to login")
-    alert("Navigate back to login page")
+    toast("Navigate back to login page")
   }
 
   const handleContactSupport = () => {
     console.log("Contact support")
-    alert("Contact support functionality")
+    toast("Contact support functionality")
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 overflow-hidden">
-      {/* Floating particles animation */}
-      <div className="fixed inset-0 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-purple-300 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animation: `float ${3 + Math.random() * 4}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 2}s`,
-            }}
-          />
-        ))}
-      </div>
+      <Animation count={25} />
 
       {/* Custom animations */}
       <style jsx>{`

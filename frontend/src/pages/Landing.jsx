@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Heart, ShoppingCart, User, Camera, Sparkles, Shirt, Shuffle, TrendingUp, MessageCircle, Ruler, Star, ChevronRight, Facebook, Twitter, Instagram, Mail, Phone, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Animation from '../components/Animation';
 
 
 const Landing = () => {
@@ -9,7 +10,6 @@ const Landing = () => {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState({});
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
   // Intersection Observer for scroll animations
@@ -32,19 +32,6 @@ const Landing = () => {
     elements.forEach((el) => observer.observe(el));
 
     return () => observer.disconnect();
-  }, []);
-
-  // Mouse movement tracking for parallax effects
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth) * 2 - 1,
-        y: (e.clientY / window.innerHeight) * 2 - 1
-      });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   // Auto-rotating testimonials
@@ -212,20 +199,7 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 overflow-hidden">
       {/* Floating particles animation */}
-      <div className="fixed inset-0 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-purple-300 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animation: `float ${3 + Math.random() * 4}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 2}s`
-            }}
-          />
-        ))}
-      </div>
+      <Animation />
 
       {/* Custom animations */}
       <style jsx>{`

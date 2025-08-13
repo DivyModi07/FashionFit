@@ -3,6 +3,8 @@ import { loginUser } from "../api/auth";
 import { useState, useEffect } from "react"
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Facebook, Twitter, Instagram, ArrowRight, User, Sparkles } from "lucide-react"
+import Animation from '../components/Animation';
+import toast from 'react-hot-toast';
 
 const Login= () => {
 
@@ -84,11 +86,11 @@ const Login= () => {
     const result = await loginUser(formData.email, formData.password);
 
     if (result.success) {
-      alert("✅ Login successful!");
-      // Navigate to dashboard
+      toast.success("Login successful!");
+      navigate('/Homepage'); // Navigate to homepage (Landing page)
     } else {
       setErrors({ email: result.error, password: "" });
-      alert("❌ " + result.error);
+      toast.error(result.error);
     }
 
     setIsLoading(false);
@@ -98,49 +100,26 @@ const Login= () => {
 
   const handleSocialLogin = (provider) => {
     console.log(`Login with ${provider}`)
-    alert(`${provider} login clicked`)
+    toast(`${provider} login clicked`)
   }
 
   const handleSignUp = () => {
     console.log("Navigate to sign up")
-    alert("Navigate to sign up page")
+    toast("Navigate to sign up page")
   }
-
-  // const handleForgotPassword = () => {
-  //   console.log("Forgot password clicked")
-  //   alert("Forgot password functionality")
-  // }
 
   const handleGuestLogin = () => {
     console.log("Continue as guest")
-    alert("Continue as guest")
+    toast("Continue as guest")
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 overflow-hidden">
       {/* Floating particles animation */}
-      <div className="fixed inset-0 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-purple-300 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animation: `float ${3 + Math.random() * 4}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 2}s`,
-            }}
-          />
-        ))}
-      </div>
+      <Animation/>
 
       {/* Custom animations */}
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(180deg); }
-        }
-        
+      <style jsx>{`        
         @keyframes slideInFromTop {
           from { transform: translateY(-100%); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
@@ -187,43 +166,9 @@ const Login= () => {
         }
       `}</style>
 
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md shadow-lg sticky top-0 z-50 animate-slide-in-top">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse-slow">
-                <span className="text-white font-bold text-lg">F</span>
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent ml-2">
-                FashionAI
-              </span>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <span className="text-gray-600">Don't have an account?</span>
-              <button
-                onClick={() => navigate('/signup')}
-                className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
-              >
-                Sign Up
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Welcome Banner */}
-      {/* <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-center py-3 animate-slide-in-top">
-        <div className="flex items-center justify-center">
-          <Sparkles className="w-4 h-4 mr-2" />
-          <span className="text-sm font-medium">Welcome Back to Fashion Revolution</span>
-        </div>
-      </div> */}
-
       {/* Main Content */}
-      <div className="flex items-center justify-center min-h-[calc(100vh-120px)] px-4 sm:px-6 lg:px-8 py-12">
-        <div className="max-w-md w-full space-y-8">
+      <div className="flex items-center justify-center min-h-[calc(100vh-120px)] px-4 sm:px-6 lg:px-8 py-7">
+        <div className="max-w-md w-full space-y-6">
           {/* Header Section */}
           <div className="text-center" data-animate id="header">
             <div
@@ -231,16 +176,16 @@ const Login= () => {
                 isVisible["header"] ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
               }`}
             >
-              <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse-slow">
+              <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse-slow">
                 <User className="w-10 h-10 text-white" />
               </div>
               <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Welcome Back!</h1>
               <p className="text-lg text-gray-600">
                 Sign in to continue your{" "}
                 <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent font-semibold">
-                  AI-powered
+                  FashionFit
                 </span>{" "}
-                fashion journey
+                journey
               </p>
             </div>
           </div>
@@ -300,16 +245,6 @@ const Login= () => {
 
                 {/* Remember Me & Forgot Password */}
                 <div className="flex items-center justify-between">
-                  {/* <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="rememberMe"
-                      checked={formData.rememberMe}
-                      onChange={handleInputChange}
-                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                    />
-                    <label className="ml-2 block text-sm text-gray-700">Remember me</label>
-                  </div> */}
                   <button
                     type="button"
                     onClick={() => navigate('/forgotpassword')}
@@ -334,94 +269,19 @@ const Login= () => {
                     </>
                   )}
                 </button>
-
-                {/* Guest Login */}
-                {/* <button
-                  type="button"
-                  onClick={handleGuestLogin}
-                  className="w-full border-2 border-purple-500 text-purple-600 py-3 px-4 rounded-xl font-semibold hover:bg-purple-500 hover:text-white transition-all duration-300 transform hover:scale-105"
-                >
-                  Continue as Guest
-                </button> */}
-
-                {/* Divider */}
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-gray-500">Or continue with</span>
-                  </div>
-                </div>
-
-                {/* Social Login */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="flex justify-center space-x-2">
+                  <span className="text-gray-600">Don't have an account?</span>
                   <button
-                    type="button"
-                    onClick={() => handleSocialLogin("Facebook")}
-                    className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-all duration-300 hover:scale-105 hover:shadow-md"
+                    onClick={() => navigate('/signup')}
+                    className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
                   >
-                    <Facebook className="w-5 h-5 text-blue-600" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSocialLogin("Twitter")}
-                    className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-all duration-300 hover:scale-105 hover:shadow-md"
-                  >
-                    <Twitter className="w-5 h-5 text-blue-400" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSocialLogin("Instagram")}
-                    className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-all duration-300 hover:scale-105 hover:shadow-md"
-                  >
-                    <Instagram className="w-5 h-5 text-pink-600" />
+                    Sign Up
                   </button>
                 </div>
+
               </form>
             </div>
           </div>
-
-          {/* Additional Features */}
-          {/* <div className="text-center" data-animate id="features">
-            <div
-              className={`transition-all duration-700 delay-300 ${
-                isVisible["features"] ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-              }`}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 text-center hover:bg-white/80 transition-all duration-300 transform hover:scale-105">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce-slow">
-                    <Sparkles className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">AI Recommendations</h3>
-                  <p className="text-xs text-gray-600 mt-1">Personalized style suggestions</p>
-                </div>
-
-                <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 text-center hover:bg-white/80 transition-all duration-300 transform hover:scale-105">
-                  <div
-                    className="w-12 h-12 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce-slow"
-                    style={{ animationDelay: "0.5s" }}
-                  >
-                    <User className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Virtual Try-On</h3>
-                  <p className="text-xs text-gray-600 mt-1">See before you buy</p>
-                </div>
-
-                <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 text-center hover:bg-white/80 transition-all duration-300 transform hover:scale-105">
-                  <div
-                    className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce-slow"
-                    style={{ animationDelay: "1s" }}
-                  >
-                    <ArrowRight className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Smart Shopping</h3>
-                  <p className="text-xs text-gray-600 mt-1">Intelligent fashion discovery</p>
-                </div>
-              </div>
-            </div>
-          </div> */}
         </div>
       </div>
     </div>
@@ -429,94 +289,3 @@ const Login= () => {
 }
 
 export default Login
-
-
-// import React, { useState } from "react";
-// import axios from "axios";
-
-// const Login = () => {
-//   const [email, setemail] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [message, setMessage] = useState("");
-
-//   const handleLogin = async (e) => {
-//     e.preventDefault();
-//     setMessage("Logging in...");
-
-//     try {
-//       const response = await axios.post("http://localhost:8000/api/token/", {
-//       email,
-//       password,
-//     });
-
-
-//       const { access, refresh } = response.data;
-
-//       // Store tokens in localStorage
-//       localStorage.setItem("access", access);
-//       localStorage.setItem("refresh", refresh);
-
-//       // Set token as default header
-//       axios.defaults.headers.common["Authorization"] = `Bearer ${access}`;
-
-//       setMessage("✅ Login successful!");
-//     } catch (error) {
-//   console.error("Axios error object:", error);
-
-//   if (error.response) {
-//     console.log("Response error:", error.response.data);
-//     setMessage("❌ " + JSON.stringify(error.response.data));
-//   } else if (error.request) {
-//     console.log("No response received:", error.request);
-//     setMessage("❌ No response from server. Possible CORS or network error.");
-//   } else {
-//     console.log("Error message:", error.message);
-//     setMessage("❌ Error: " + error.message);
-//   }
-// }
-
-//   };
-
-//   return (
-//     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-//       <div className="w-full max-w-md bg-white p-8 rounded shadow-md">
-//         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Login</h2>
-
-//         <form onSubmit={handleLogin} className="space-y-4">
-//           <div>
-//             <label className="block text-sm text-gray-700">email</label>
-//             <input
-//               type="text"
-//               value={email}
-//               onChange={(e) => setemail(e.target.value)}
-//               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-400"
-//               required
-//             />
-//           </div>
-
-//           <div>
-//             <label className="block text-sm text-gray-700">Password</label>
-//             <input
-//               type="password"
-//               value={password}
-//               onChange={(e) => setPassword(e.target.value)}
-//               className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-400"
-//               required
-//             />
-//           </div>
-
-//           <button
-//             type="submit"
-//             className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-//           >
-//             Login
-//           </button>
-//         </form>
-
-//         <p className="text-sm text-center text-red-600 mt-4">{message}</p>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Login;

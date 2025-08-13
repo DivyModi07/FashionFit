@@ -16,8 +16,11 @@ import {
   Twitter,
   Instagram,
   Camera,
-  Shirt
+  Shirt,
+  ArrowLeft
 } from 'lucide-react';
+import Animation from '../components/Animation';
+import toast from 'react-hot-toast';
 
 const Signup = () => {
 
@@ -123,7 +126,7 @@ const Signup = () => {
       setCurrentStep(currentStep + 1); // move to next step
     } catch (err) {
       console.error("Validation failed:", err);
-      alert("Server error while checking email/phone.");
+      toast.error("Server error while checking email/phone.");
     }
   } else {
     if (validateStep(currentStep)) {
@@ -172,15 +175,16 @@ const Signup = () => {
     const data = await res.json();
 
     if (res.ok) {
-      alert("Signup successful! 🎉");
+      toast.success("Signup successful! 🎉");
       console.log("Backend response:", data);
+      navigate('/login');
     } else {
-      alert(`Signup failed! ❌ ${JSON.stringify(data)}`);
+      toast.error(`Signup failed! ${JSON.stringify(data)}`);
 
     }
 
   } catch (error) {
-    alert("Server error. Try again later.");
+    toast.error("Server error. Try again later.");
     console.error("Request failed:", error);
   }
 };
@@ -188,7 +192,7 @@ const Signup = () => {
 
   const handleSocialSignup = (provider) => {
     console.log(`Signing up with ${provider}`);
-    // Implement social signup logic
+    toast(`${provider} signup clicked`);
   };
 
   const stepTitles = [
@@ -201,20 +205,7 @@ const Signup = () => {
 
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100">
       
-      <div className="fixed inset-0 pointer-events-none">
-        {[...Array(15)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-purple-300 rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animation: `float ${3 + Math.random() * 4}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 2}s`,
-            }}
-          />
-        ))}
-      </div>
+      <Animation />
 
       {/* Custom animations */}
       <style jsx>{`
@@ -260,47 +251,16 @@ const Signup = () => {
         }
       `}</style>
 
-      {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md shadow-lg sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">F</span>
-              </div>
-              <span className="ml-2 text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                FashionAI
-              </span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-600">Already have an account?</span>
-              <button 
-                onClick={() => navigate('/login')}
-                className="text-purple-600 hover:text-purple-700 font-medium"
-              >
-                Sign In
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
 
       {/* Hero Section */}
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            {/* <div className="inline-flex items-center px-4 py-2 bg-purple-100 rounded-full text-purple-600 text-sm font-medium mb-6">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Join the Fashion Revolution
-            </div> */}
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               Create Your
-              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent"> AI-Powered </span>
-              Fashion Account
+              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent"> FashionFit </span>
+               Account
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Join thousands of fashion enthusiasts discovering their perfect style with our AI recommendations
-            </p>
           </div>
 
           {/* Progress Steps */}
@@ -339,8 +299,8 @@ const Signup = () => {
 
           {/* Signup Form */}
           <div className="max-w-2xl mx-auto">
-            <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl p-8 md:p-12 border border-white/20">
-              <form  className="space-y-6">
+            <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl p-8 md:p-8 border border-white/20">
+              <form  className="space-y-4">
                 {/* Step 1: Personal Information */}
                 {currentStep === 1 && (
                   <div className="space-y-6">
@@ -349,7 +309,6 @@ const Signup = () => {
                         <User className="w-8 h-8 text-white" />
                       </div>
                       <h2 className="text-2xl font-bold text-gray-900">Personal Information</h2>
-                      <p className="text-gray-600 mt-2">Tell us about yourself</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -434,8 +393,7 @@ const Signup = () => {
                       {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                     </div>
 
-                    {/* Social Signup Options */}
-                    <div className="mt-8">
+                      <div className="mt-8">
                       <div className="relative">
                         <div className="absolute inset-0 flex items-center">
                           <div className="w-full border-t border-gray-300"></div>
@@ -444,42 +402,31 @@ const Signup = () => {
                           <span className="px-2 bg-white text-gray-500">Or continue with</span>
                         </div>
                       </div>
-                      <div className="mt-6 grid grid-cols-3 gap-4">
-                        <button
-                          type="button"
-                          onClick={() => handleSocialSignup('facebook')}
-                          className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-xl bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
+                      <div className="flex justify-center mt-5 space-x-4">
+                        <span className="text-gray-600">Already have an account?</span>
+                        <button 
+                          onClick={() => navigate('/login')}
+                          className="text-purple-600 hover:text-purple-700 font-medium"
                         >
-                          <Facebook className="w-5 h-5 text-blue-600" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleSocialSignup('twitter')}
-                          className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-xl bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
-                        >
-                          <Twitter className="w-5 h-5 text-blue-400" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleSocialSignup('instagram')}
-                          className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-xl bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors"
-                        >
-                          <Instagram className="w-5 h-5 text-pink-600" />
+                          Sign In
                         </button>
                       </div>
                     </div>
+                    
+
+
+
                   </div>
                 )}
 
                 {/* Step 2: Account Security */}
                 {currentStep === 2 && (
-                  <div className="space-y-6">
-                    <div className="text-center mb-8">
+                  <div className="space-y-4">
+                    <div className="text-center mb-6">
                       <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Lock className="w-8 h-8 text-white" />
                       </div>
                       <h2 className="text-2xl font-bold text-gray-900">Account Security</h2>
-                      <p className="text-gray-600 mt-2">Secure your account with a strong password</p>
                     </div>
 
                     <div>
@@ -577,18 +524,18 @@ const Signup = () => {
                         {errors.gender && <p className="text-red-500 text-sm mt-1">{errors.gender}</p>}
                       </div>
                     </div>
+
                   </div>
                 )}
 
                 {/* Step 3: Address & Preferences */}
                 {currentStep === 3 && (
-                  <div className="space-y-6">
-                    <div className="text-center mb-8">
+                  <div className="space-y-4">
+                    <div className="text-center mb-6">
                       <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
                         <MapPin className="w-8 h-8 text-white" />
                       </div>
                       <h2 className="text-2xl font-bold text-gray-900">Address & Preferences</h2>
-                      <p className="text-gray-600 mt-2">Complete your profile setup</p>
                     </div>
 
                     <div>
@@ -667,21 +614,10 @@ const Signup = () => {
 
                     </div>
 
-                    <div className="space-y-4">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          name="newsletter"
-                          id="newsletter"
-                          checked={formData.newsletter}
-                          onChange={handleInputChange}
-                          className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor="newsletter" className="ml-2 block text-sm text-gray-900">
-                          Subscribe to our newsletter for style tips and exclusive offers
-                        </label>
-                      </div>
+  
 
+
+                    <div className="space-y-4">
                       <div className="flex items-start">
                         <input
                           type="checkbox"
@@ -712,18 +648,23 @@ const Signup = () => {
                       </div>
                       {errors.terms && <p className="text-red-500 text-sm">{errors.terms}</p>}
                     </div>
+
                   </div>
                 )}
 
+                
+
+
                 {/* Navigation Buttons */}
-                <div className="flex justify-between items-center pt-6">
+                <div className="flex justify-between items-center pt-2">
+
                   {currentStep > 1 && (
                     <button
                       type="button"
                       onClick={handlePrevStep}
-                      className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                      className="mr-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 flex items-center"
                     >
-                      Previous
+                      <ArrowLeft className="w-5 h-5 mr-2" />   Previous
                     </button>
                   )}
                   
