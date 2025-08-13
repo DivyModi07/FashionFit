@@ -1,1 +1,0 @@
-1. When sending email in forgot password then it should check in database that email exit or not.

@@ -1,3 +1,5 @@
+# products/models.py
+
 from django.db import models
 
 class Product(models.Model):
@@ -22,6 +24,9 @@ class Product(models.Model):
     discount_label = models.CharField(max_length=100, null=True, blank=True)
     short_description = models.TextField(null=True, blank=True)
     stock_total = models.IntegerField(null=True, blank=True)
+
+    # Add this line!
+    embedding = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return self.short_description or f"Product {self.id}"
