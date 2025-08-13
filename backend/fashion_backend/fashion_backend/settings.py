@@ -12,11 +12,18 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from decouple import config
+import os
 
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# Hugging Face token from environment variable
+HF_API_TOKEN = config('HF_API_TOKEN', default='')
+
+# Set MEDIA_ROOT to point to a 'media' folder inside the 'tryon_app' directory
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'tryon_app', 'media')
 
 
 # Quick-start development settings - unsuitable for production
@@ -37,6 +44,7 @@ AUTH_USER_MODEL = 'users.CustomUser'
 
 
 
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -51,6 +59,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
     'products',
+    'tryon_app',
 ]
 
 REST_FRAMEWORK = {
