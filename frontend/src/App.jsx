@@ -8,10 +8,13 @@ import Homepage from './pages/Homepage';
 import ForgotPassword from './pages/ForgotPassword';
 import ProductPage from './pages/ProductPage';
 import ProductDetails from './pages/ProductDetails';
+import CartPage from './pages/CartPage';
+import WishlistPage from './pages/WishlistPage';
+import { CartWishlistProvider } from './context/CartWishlistContext';
 
 const App = () => {
   return (
-    <>
+    <CartWishlistProvider>
       <Toaster
         position="top-right"
         toastOptions={{
@@ -52,10 +55,13 @@ const App = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/homepage" element={<Homepage />} />
         <Route path="/forgotpassword" element={<ForgotPassword />} />
+        <Route path="/products" element={<ProductPage />} />
         <Route path="/productpage" element={<ProductPage />} />
         <Route path="/productdetails" element={<ProductDetails />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
       </Routes>
-    </>
+    </CartWishlistProvider>
   );
 };
 

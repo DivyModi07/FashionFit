@@ -18,8 +18,8 @@ class Command(BaseCommand):
         with open(file_path, mode='r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for i, row in enumerate(reader):
-                if i >= 100:  # Limit to first 20 rows for testing
-                    break
+                # if i >= 100:  # Limit to first 20 rows for testing
+                #     break
                 try:
                     Product.objects.create(
                         product_id=row.get('id'),

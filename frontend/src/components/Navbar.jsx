@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Heart, ShoppingCart, User, Menu, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useCartWishlist } from '../context/CartWishlistContext';
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const { cartCount, wishlistCount } = useCartWishlist();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(3);
-  const [wishlistCount, setWishlistCount] = useState(5);
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Handle scroll effect
@@ -17,8 +19,27 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+
+
   const handleButtonClick = (action) => {
     console.log(`Button clicked: ${action}`);
+    
+    switch (action) {
+      case 'cart':
+        navigate('/cart');
+        break;
+      case 'wishlist':
+        navigate('/wishlist');
+        break;
+      case 'products':
+        navigate('/products');
+        break;
+      case 'account':
+        navigate('/login');
+        break;
+      default:
+        console.log(`Button clicked: ${action}`);
+    }
   };
 
   const menuItems = [

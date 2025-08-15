@@ -52,6 +52,9 @@ const [products,setProducts]=useState([])
 // Dynamically generate unique types from products for category filter
 const availableTypes = Array.from(new Set(products.map(p => p.type).filter(Boolean))).sort();
 
+// Dynamically generate unique brands from products for brand filter
+const availableBrands = Array.from(new Set(products.map(p => p.brand).filter(Boolean))).sort();
+
 // Place filteredAndSortedProducts here so it is defined before useEffect
 const filteredAndSortedProducts = products
   .filter((product) => {
@@ -107,8 +110,8 @@ const filteredAndSortedProducts = products
     }
   });
 
-useEffect(() => {
-    axios.get('http://127.0.0.1:8000/products/all/')
+  useEffect(() => {
+    axios.get('http://127.0.0.1:8000/api/products/all/')
       .then(res => {
         console.log("✅ DATA FROM API:", res.data);
         const mapped = res.data.map((item, index) => {
@@ -200,16 +203,58 @@ const filterOptions = {
   }
 
   // Handle wishlist toggle
-  const toggleWishlist = (productId) => {
-    setProducts((prev) =>
-      prev.map((product) => (product.id === productId ? { ...product, isWishlisted: !product.isWishlisted } : product)),
-    )
+  const toggleWishlist = async (productId) => {
+    const token = localStorage.getItem('access_token');
+    console.log('Token check in toggleWishlist:', !!token, 'Token length:', token?.length);
+    if (!token) {
+      console.log('No token found, redirecting to login');
+      window.location.href = '/login';
+      return;
+    }
+    
+    try {
+      const { addToWishlist, removeFromWishlist, getWishlist } = await import('../api/wishlist');
+      const product = products.find(p => p.id === productId);
+      
+      if (product?.isWishlisted) {
+        // Find wishlist item ID and remove
+        const wishlist = await getWishlist();
+        const wishlistItem = wishlist.find(item => item.product.id === productId);
+        if (wishlistItem) {
+          await removeFromWishlist(wishlistItem.id);
+        }
+      } else {
+        await addToWishlist(productId);
+      }
+      
+      // Update local state
+      setProducts((prev) =>
+        prev.map((product) => (product.id === productId ? { ...product, isWishlisted: !product.isWishlisted } : product)),
+      );
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+      // Don't redirect here, let the API handle it
+    }
   }
 
   // Handle add to cart
-  const handleAddToCart = (productId, options = {}) => {
-    console.log(`Added product ${productId} to cart`, options)
-    // Add your cart logic here
+  const handleAddToCart = async (productId, options = {}) => {
+    const token = localStorage.getItem('access_token');
+    console.log('Token check in handleAddToCart:', !!token, 'Token length:', token?.length);
+    if (!token) {
+      console.log('No token found, redirecting to login');
+      window.location.href = '/login';
+      return;
+    }
+    
+    try {
+      const { addToCart } = await import('../api/cart');
+      await addToCart(productId, options.quantity || 1);
+      console.log(`Added product ${productId} to cart`, options);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      // Don't redirect here, let the API handle it
+    }
   }
 
   // Handle quick view
@@ -249,13 +294,64 @@ const filterOptions = {
   }
 
   // Handle image search
-  const handleImageSearch = (event) => {
+  const handleImageSearch = async (event) => {
     const file = event.target.files[0]
     if (file) {
       setImageSearchFile(file)
-      console.log("Image search file:", file)
-      // Here you would typically upload the image to your AI service
-      // and get similar products back
+      setIsLoading(true)
+      
+      try {
+        const formData = new FormData()
+        formData.append('image', file)
+
+        const response = await axios.post('http://127.0.0.1:8000/api/products/search_image/', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+
+        if (response.data.results) {
+          const mapped = response.data.results.map((item, index) => {
+            // Extract type from short_description (last word, lowercased)
+            let type = '';
+            if (item.short_description) {
+              const words = item.short_description.trim().split(' ');
+              type = words.length > 0 ? words[words.length - 1].toLowerCase() : '';
+            }
+            return {
+              id: item.id || index,
+              name: item.short_description || "No name",
+              brand: item.brand_name,
+              finalPrice: Number(item.final_price) || 0,
+              initialPrice: Number(item.initial_price) || 0,
+              isOnSale: !!item.is_on_sale,
+              discount: item.is_on_sale ? parseInt(item.discount_label?.replace('% Off', '') || "0", 10) : 0,
+              merchandiseLabel: item.merchandise_label || "",
+              rating: 4.5, // Default rating since API doesn't provide
+              reviews: Math.floor(Math.random() * 50) + 10, // Random reviews count
+              reviewList: [], // Empty array since API doesn't provide
+              image: item.model_image || "/placeholder.png",
+              modelImage: item.model_image,
+              cutoutImage: item.cutout_image,
+              description: item.short_description || "",
+              type, // new type field
+              currency: item.currency || "USD",
+              isWishlisted: false,
+              stock: Number(item.stock_total) || 0,
+              isCustomizable: !!item.is_customizable,
+              brand_id: item.brand_id,
+              merchant_id: item.merchant_id,
+              product_id: item.product_id,
+            };
+          });
+          setProducts(mapped)
+        }
+      } catch (error) {
+        console.error('Image search error:', error)
+        // Keep existing products if search fails
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -498,13 +594,20 @@ const filterOptions = {
                       onChange={handleImageSearch}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       id="image-search"
+                      disabled={isLoading}
                     />
                     <label
                       htmlFor="image-search"
-                      className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 cursor-pointer"
+                      className={`flex items-center justify-center w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 cursor-pointer ${
+                        isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
                       title="Search by image"
                     >
-                      <Camera className="w-5 h-5" />
+                      {isLoading ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      ) : (
+                        <Camera className="w-5 h-5" />
+                      )}
                     </label>
                   </div>
                 </div>
@@ -524,7 +627,58 @@ const filterOptions = {
                       {filteredAndSortedProducts.length} product{filteredAndSortedProducts.length !== 1 ? "s" : ""}{" "}
                       found
                       {searchQuery && <span className="ml-2 text-purple-600">for "{searchQuery}"</span>}
-                      {imageSearchFile && <span className="ml-2 text-pink-600">• Image search active</span>}
+                      {imageSearchFile && (
+                        <span className="ml-2 text-pink-600 flex items-center gap-2">
+                          <Camera className="w-4 h-4" />
+                          Image search active
+                          <button
+                            onClick={() => {
+                              setImageSearchFile(null)
+                              // Reload original products
+                              axios.get('http://127.0.0.1:8000/api/products/all/')
+                                .then(res => {
+                                  const mapped = res.data.map((item, index) => {
+                                    let type = '';
+                                    if (item.short_description) {
+                                      const words = item.short_description.trim().split(' ');
+                                      type = words.length > 0 ? words[words.length - 1].toLowerCase() : '';
+                                    }
+                                    return {
+                                      id: item.id || index,
+                                      name: item.short_description || "No name",
+                                      brand: item.brand_name,
+                                      finalPrice: Number(item.final_price) || 0,
+                                      initialPrice: Number(item.initial_price) || 0,
+                                      isOnSale: !!item.is_on_sale,
+                                      discount: item.is_on_sale ? parseInt(item.discount_label?.replace('% Off', '') || "0", 10) : 0,
+                                      merchandiseLabel: item.merchandise_label || "",
+                                      rating: 4.5,
+                                      reviews: Math.floor(Math.random() * 50) + 10,
+                                      reviewList: [],
+                                      image: item.model_image || "/placeholder.png",
+                                      modelImage: item.model_image,
+                                      cutoutImage: item.cutout_image,
+                                      description: item.short_description || "",
+                                      type,
+                                      currency: item.currency || "USD",
+                                      isWishlisted: false,
+                                      stock: Number(item.stock_total) || 0,
+                                      isCustomizable: !!item.is_customizable,
+                                      brand_id: item.brand_id,
+                                      merchant_id: item.merchant_id,
+                                      product_id: item.product_id,
+                                    };
+                                  });
+                                  setProducts(mapped);
+                                })
+                                .catch(err => console.error("❌ Failed to fetch products:", err));
+                            }}
+                            className="text-pink-600 hover:text-pink-800"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      )}
                     </span>
                   </div>
 

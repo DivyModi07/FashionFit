@@ -12,8 +12,8 @@ export const loginUser = async (email, password) => {
 
     const { access, refresh } = response.data;
 
-    localStorage.setItem("accessToken", access);
-    localStorage.setItem("refreshToken", refresh);
+    localStorage.setItem("access_token", access);
+    localStorage.setItem("refresh_token", refresh);
 
     axios.defaults.headers.common["Authorization"] = `Bearer ${access}`;
 
@@ -26,14 +26,14 @@ export const loginUser = async (email, password) => {
 
 // ✅ Logout function
 export const logoutUser = () => {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("refresh_token");
   delete axios.defaults.headers.common["Authorization"];
 };
 
 // ✅ Refresh token function
 export const refreshToken = async () => {
-  const refresh = localStorage.getItem("refreshToken");
+  const refresh = localStorage.getItem("refresh_token");
   if (!refresh) return { success: false, error: "No refresh token" };
 
   try {
@@ -43,7 +43,7 @@ export const refreshToken = async () => {
 
     const { access } = response.data;
 
-    localStorage.setItem("accessToken", access);
+    localStorage.setItem("access_token", access);
     axios.defaults.headers.common["Authorization"] = `Bearer ${access}`;
 
     return { success: true, access };

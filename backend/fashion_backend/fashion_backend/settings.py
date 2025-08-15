@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'products',
     'tryon_app',
+    'orders'
 ]
 
 REST_FRAMEWORK = {
@@ -180,7 +181,13 @@ SESSION_COOKIE_SAMESITE = 'None'
 
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # ✅ Vite dev server
+    "http://localhost:3000", # Default for Create React App
+    "http://localhost:5173", # Default for Vite
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR,'tryon_app','media')

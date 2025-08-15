@@ -14,15 +14,16 @@ import {
   ChevronDown,
   Eye,
 } from "lucide-react"
-import Navbar from './components/Navbar.jsx'
-import Footer from './components/Footer.jsx'
-import Animation from './components/Animation.jsx'
-import ProductDetails from "./ProductDetails.jsx"
+import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
+import Animation from '../components/Animation'
+import ProductDetails from "./ProductDetails"
+import { getWishlist, removeFromWishlist } from '../api/wishlist'
+import { addToCart } from '../api/cart'
 
 const WishlistPage = () => {
   const [cart, setCart] = useState([])
   const [notification, setNotification] = useState(null)
-  const [viewMode, setViewMode] = useState("grid")
   const [favorites, setFavorites] = useState(new Set())
   const [selectedItems, setSelectedItems] = useState(new Set())
   const [sortBy, setSortBy] = useState("recent")
@@ -33,137 +34,48 @@ const WishlistPage = () => {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [isProductDetailOpen, setIsProductDetailOpen] = useState(false)
 
-  // Sample wishlist data with enhanced product information
-  const wishlistItems = [
-    {
-      id: 1,
-      name: "Elegant Summer Dress",
-      price: 89.99,
-      originalPrice: 129.99,
-      image:
-        "https://images.unsplash.com/photo-1595777457583-95e059d581b8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      rating: 4.5,
-      discount: 31,
-      category: "Dresses",
-      addedDate: "2024-01-15",
-      inStock: true,
-      colors: ["Red", "Blue", "Black"],
-      sizes: ["S", "M", "L", "XL"],
-      brand: "Fashion Co",
-      description:
-        "A beautiful and elegant summer dress perfect for any occasion. Made with premium materials for comfort and style.",
-      reviews: 124,
-      isNew: false,
-      isWishlisted: true,
-    },
-    {
-      id: 2,
-      name: "Casual Denim Jacket",
-      price: 79.99,
-      originalPrice: 99.99,
-      image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      rating: 4.3,
-      discount: 20,
-      category: "Jackets",
-      addedDate: "2024-01-10",
-      inStock: true,
-      colors: ["Blue", "Light Blue"],
-      sizes: ["M", "L", "XL"],
-      brand: "Denim Works",
-      description: "Classic denim jacket with a modern twist. Perfect for layering and everyday wear.",
-      reviews: 89,
-      isNew: true,
-      isWishlisted: true,
-    },
-    {
-      id: 3,
-      name: "Stylish Sneakers",
-      price: 129.99,
-      originalPrice: 159.99,
-      image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      rating: 4.7,
-      discount: 19,
-      category: "Shoes",
-      addedDate: "2024-01-05",
-      inStock: false,
-      colors: ["White", "Black"],
-      sizes: ["7", "8", "9", "10"],
-      brand: "SportStyle",
-      description:
-        "Comfortable and stylish sneakers for everyday wear. Premium quality materials and excellent cushioning.",
-      reviews: 256,
-      isNew: false,
-      isWishlisted: true,
-    },
-    {
-      id: 4,
-      name: "Designer Handbag",
-      price: 199.99,
-      originalPrice: 249.99,
-      image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      rating: 4.6,
-      discount: 20,
-      category: "Bags",
-      addedDate: "2024-01-08",
-      inStock: true,
-      colors: ["Brown", "Black", "Tan"],
-      sizes: ["One Size"],
-      brand: "Luxury Bags",
-      description:
-        "Elegant designer handbag crafted from premium leather. Perfect for both casual and formal occasions.",
-      reviews: 78,
-      isNew: false,
-      isWishlisted: true,
-    },
-    {
-      id: 5,
-      name: "Bohemian Maxi Dress",
-      price: 119.99,
-      originalPrice: 159.99,
-      image:
-        "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      rating: 4.8,
-      discount: 25,
-      category: "Dresses",
-      addedDate: "2024-01-12",
-      inStock: true,
-      colors: ["Floral", "Solid"],
-      sizes: ["XS", "S", "M", "L"],
-      brand: "Boho Chic",
-      description: "Flowing bohemian maxi dress with beautiful patterns. Perfect for summer events and casual outings.",
-      reviews: 145,
-      isNew: true,
-      isWishlisted: true,
-    },
-    {
-      id: 6,
-      name: "Vintage Leather Jacket",
-      price: 149.99,
-      originalPrice: 199.99,
-      image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      rating: 4.6,
-      discount: 25,
-      category: "Jackets",
-      addedDate: "2024-01-03",
-      inStock: true,
-      colors: ["Brown", "Black"],
-      sizes: ["S", "M", "L"],
-      brand: "Vintage Style",
-      description: "Classic vintage-style leather jacket with authentic detailing. A timeless piece for your wardrobe.",
-      reviews: 92,
-      isNew: false,
-      isWishlisted: true,
-    },
-  ]
+  const [wishlistItems, setWishlistItems] = useState([])
 
   // Get unique categories for filter
   const categories = ["all", ...new Set(wishlistItems.map((item) => item.category))]
 
-  // Initialize favorites
+  // Fetch wishlist data on component mount
   useEffect(() => {
-    const initialFavorites = new Set(wishlistItems.map((item) => item.id))
-    setFavorites(initialFavorites)
-  }, [])
+    const fetchWishlistData = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+          const wishlistData = await getWishlist();
+          const transformedItems = wishlistData.map(item => ({
+            id: item.id,
+            productId: item.product.id,
+            name: item.product.short_description || `Product ${item.product.id}`,
+            price: item.product.final_price || item.product.initial_price || 0,
+            originalPrice: item.product.initial_price || null,
+            image: item.product.model_image || item.product.cutout_image || "https://images.unsplash.com/photo-1595777457583-95e059d581b8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+            rating: 4.5, // Default rating
+            discount: item.product.is_on_sale ? Math.round(((item.product.initial_price - item.product.final_price) / item.product.initial_price) * 100) : 0,
+            category: item.product.merchandise_label || "Apparel",
+            addedDate: item.added_at,
+            inStock: (item.product.stock_total || 0) > 0,
+            colors: ["Default"], // Default colors
+            sizes: ["M"], // Default sizes
+            brand: item.product.brand_name || "Generic Brand",
+            description: item.product.short_description || `Discover the ${item.product.short_description || 'product'}. A high-quality product designed for comfort and style.`,
+            reviews: Math.floor(Math.random() * 200) + 50, // Random reviews
+            isNew: false,
+            isWishlisted: true,
+          }));
+          setWishlistItems(transformedItems);
+          setFavorites(new Set(transformedItems.map(item => item.id)));
+        }
+      } catch (error) {
+        console.error('Error fetching wishlist data:', error);
+      }
+    };
+
+    fetchWishlistData();
+  }, []);
 
   // Intersection Observer for animations
   useEffect(() => {
@@ -187,39 +99,17 @@ const WishlistPage = () => {
     return () => observer.disconnect()
   }, [])
 
-  const handleAddToCart = (productId, options = {}) => {
+  const handleAddToCart = async (productId, options = {}) => {
     const product = wishlistItems.find((item) => item.id === productId)
     if (!product || !product.inStock) return
 
-    const cartItem = {
-      id: productId,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      quantity: options.quantity || 1,
-      size: options.size || product.sizes?.[0] || "",
-      color: options.color || product.colors?.[0] || "",
-      addedAt: new Date().toISOString(),
+    try {
+      await addToCart(product.productId, options.quantity || 1);
+      showNotification(`${product.name} added to cart!`, "success")
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      showNotification('Failed to add item to cart', "error")
     }
-
-    setCart((prev) => {
-      const existingItem = prev.find(
-        (item) => item.id === productId && item.size === cartItem.size && item.color === cartItem.color,
-      )
-
-      if (existingItem) {
-        return prev.map((item) =>
-          item.id === productId && item.size === cartItem.size && item.color === cartItem.color
-            ? { ...item, quantity: item.quantity + cartItem.quantity }
-            : item,
-        )
-      } else {
-        return [...prev, cartItem]
-      }
-    })
-
-    showNotification(`${product.name} added to cart!`, "success")
-    console.log("Added to cart:", cartItem)
   }
 
   const handleAddSelectedToCart = () => {
@@ -238,35 +128,58 @@ const WishlistPage = () => {
     showNotification(`${selectedProducts.length} items added to cart!`, "success")
   }
 
-  const handleRemoveSelected = () => {
+  const handleRemoveSelected = async () => {
     if (selectedItems.size === 0) {
       showNotification("No items selected!", "error")
       return
     }
 
-    const removedCount = selectedItems.size
+    try {
+      const selectedProducts = wishlistItems.filter((item) => selectedItems.has(item.id));
+      
+      // Remove from backend
+      for (const product of selectedProducts) {
+        await removeFromWishlist(product.id);
+      }
 
-    // Remove from favorites
-    setFavorites((prev) => {
-      const newFavorites = new Set(prev)
-      selectedItems.forEach((id) => newFavorites.delete(id))
-      return newFavorites
-    })
+      // Update local state
+      setWishlistItems((prev) => prev.filter((item) => !selectedItems.has(item.id)));
+      setFavorites((prev) => {
+        const newFavorites = new Set(prev)
+        selectedItems.forEach((id) => newFavorites.delete(id))
+        return newFavorites
+      })
 
-    setSelectedItems(new Set())
-    showNotification(`${removedCount} items removed from wishlist!`, "success")
+      setSelectedItems(new Set())
+      showNotification(`${selectedItems.size} items removed from wishlist!`, "success")
+    } catch (error) {
+      console.error('Error removing items:', error);
+      showNotification('Failed to remove items from wishlist', "error")
+    }
   }
 
-  const handleClearWishlist = () => {
+  const handleClearWishlist = async () => {
     if (favorites.size === 0) {
       showNotification("Wishlist is already empty!", "error")
       return
     }
 
     if (window.confirm("Are you sure you want to clear your entire wishlist? This action cannot be undone.")) {
-      setFavorites(new Set())
-      setSelectedItems(new Set())
-      showNotification("Wishlist cleared successfully!", "success")
+      try {
+        // Remove all items from backend
+        for (const item of wishlistItems) {
+          await removeFromWishlist(item.id);
+        }
+
+        // Update local state
+        setWishlistItems([]);
+        setFavorites(new Set())
+        setSelectedItems(new Set())
+        showNotification("Wishlist cleared successfully!", "success")
+      } catch (error) {
+        console.error('Error clearing wishlist:', error);
+        showNotification('Failed to clear wishlist', "error")
+      }
     }
   }
 
@@ -374,16 +287,26 @@ const WishlistPage = () => {
     setTimeout(() => setNotification(null), 3000)
   }
 
-  const toggleFavorite = (id) => {
-    setFavorites((prev) => {
-      const newFavorites = new Set(prev)
-      if (newFavorites.has(id)) {
+  const toggleFavorite = async (id) => {
+    try {
+      const product = wishlistItems.find(item => item.id === id);
+      if (!product) return;
+
+      await removeFromWishlist(id);
+      
+      // Update local state
+      setWishlistItems((prev) => prev.filter((item) => item.id !== id));
+      setFavorites((prev) => {
+        const newFavorites = new Set(prev)
         newFavorites.delete(id)
-      } else {
-        newFavorites.add(id)
-      }
-      return newFavorites
-    })
+        return newFavorites
+      })
+      
+      showNotification(`${product.name} removed from wishlist!`, "success")
+    } catch (error) {
+      console.error('Error removing from wishlist:', error);
+      showNotification('Failed to remove from wishlist', "error")
+    }
   }
 
   const toggleItemSelection = (id) => {
@@ -534,87 +457,7 @@ const WishlistPage = () => {
     </div>
   )
 
-  const WishlistListItem = ({ item }) => (
-    <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
-      <div className="flex">
-        <div className="relative w-48 h-48 flex-shrink-0">
-          <img src={item.image || "/placeholder.svg"} alt={item.name} className="w-full h-full object-cover" />
-          {item.discount > 0 && (
-            <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded-full text-sm font-semibold">
-              -{item.discount}%
-            </div>
-          )}
-        </div>
-        <div className="flex-1 p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">{item.name}</h3>
-              <div className="flex items-center mb-2">
-                {renderStars(item.rating)}
-                <span className="text-sm text-gray-500 ml-2">({item.rating})</span>
-              </div>
-              <p className="text-gray-600 mb-2">{item.category}</p>
-              <p className="text-sm text-gray-500">Added: {new Date(item.addedDate).toLocaleDateString()}</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <input
-                type="checkbox"
-                checked={selectedItems.has(item.id)}
-                onChange={() => toggleItemSelection(item.id)}
-                className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
-              />
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => toggleFavorite(item.id)}
-                  className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors duration-300"
-                >
-                  <Heart
-                    className={`w-4 h-4 ${favorites.has(item.id) ? "text-red-500 fill-current" : "text-gray-400"}`}
-                  />
-                </button>
-                <button
-                  onClick={() => handleViewProduct(item)}
-                  className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors duration-300"
-                  title="View Product Details"
-                >
-                  <Eye className="w-4 h-4 text-blue-500" />
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <span className="text-2xl font-bold text-gray-900">${item.price}</span>
-                {item.originalPrice && (
-                  <span className="text-lg text-gray-500 line-through">${item.originalPrice}</span>
-                )}
-              </div>
-              <div
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  item.inStock ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                }`}
-              >
-                {item.inStock ? "In Stock" : "Out of Stock"}
-              </div>
-            </div>
-            <button
-              onClick={() => handleAddToCart(item.id)}
-              disabled={!item.inStock}
-              className={`px-6 py-2 rounded-full transition-all duration-300 transform hover:scale-105 ${
-                item.inStock
-                  ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              <ShoppingCart className="w-4 h-4 mr-2 inline" />
-              Add to Cart
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+
 
   return (
     <>
@@ -724,25 +567,7 @@ const WishlistPage = () => {
                   <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
                 </div>
 
-                {/* View Mode */}
-                <div className="flex items-center space-x-2 w-full sm:w-auto justify-center sm:justify-start mt-2 sm:mt-0">
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    className={`p-2 rounded-lg transition-colors ${
-                      viewMode === "grid" ? "bg-purple-100 text-purple-600" : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    <Grid className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className={`p-2 rounded-lg transition-colors ${
-                      viewMode === "list" ? "bg-purple-100 text-purple-600" : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    <List className="w-5 h-5" />
-                  </button>
-                </div>
+
               </div>
             </div>
 
@@ -800,7 +625,7 @@ const WishlistPage = () => {
               <h3 className="text-2xl font-semibold text-gray-900 mb-2">Your wishlist is empty</h3>
               <p className="text-gray-600 mb-8">Start adding items you love!</p>
               <button
-                onClick={() => showNotification("Browse products feature coming soon!", "info")}
+                onClick={() => window.location.href = '/products'}
                 className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
               >
                 Browse Products
@@ -819,31 +644,17 @@ const WishlistPage = () => {
                 isVisible["wishlist-items"] ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
               }`}
             >
-              {viewMode === "grid" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredItems.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className="transition-all duration-700"
-                      style={{ transitionDelay: `${index * 0.1}s` }}
-                    >
-                      <WishlistCard item={item} />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {filteredItems.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className="transition-all duration-700"
-                      style={{ transitionDelay: `${index * 0.1}s` }}
-                    >
-                      <WishlistListItem item={item} />
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredItems.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="transition-all duration-700"
+                    style={{ transitionDelay: `${index * 0.1}s` }}
+                  >
+                    <WishlistCard item={item} />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

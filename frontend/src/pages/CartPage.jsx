@@ -13,58 +13,22 @@ import {
   Gift,
   ArrowRight,
 } from "lucide-react"
-import CheckoutFlow from "./Checkout.jsx"
-import ProductDetails from "./ProductDetails.jsx" // Import ProductDetails component
-import Navbar from './components/Navbar.jsx'
-import Footer from './components/Footer.jsx'
-import Animation from './components/Animation.jsx'
+import CheckoutFlow from "./Checkout"
+import ProductDetails from "./ProductDetails" // Import ProductDetails component
+import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
+import Animation from '../components/Animation'
+import { getCart, removeFromCart, updateCartItemQuantity } from '../api/cart'
+import { addToWishlist, removeFromWishlist } from '../api/wishlist'
 
 const CartPage = () => {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Elegant Summer Dress",
-      price: 89.99,
-      originalPrice: 129.99,
-      image:
-        "https://images.unsplash.com/photo-1595777457583-95e059d581b8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      quantity: 2,
-      size: "M",
-      color: "Blue",
-      rating: 4.5,
-      inStock: true,
-    },
-    {
-      id: 2,
-      name: "Casual Denim Jacket",
-      price: 79.99,
-      originalPrice: 99.99,
-      image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      quantity: 1,
-      size: "L",
-      color: "Dark Blue",
-      rating: 4.3,
-      inStock: true,
-    },
-    {
-      id: 3,
-      name: "Designer Handbag",
-      price: 199.99,
-      originalPrice: 249.99,
-      image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-      quantity: 1,
-      size: "One Size",
-      color: "Black",
-      rating: 4.6,
-      inStock: false,
-    },
-  ])
+  const [cartItems, setCartItems] = useState([])
 
 
   const [promoCode, setPromoCode] = useState("")
   const [appliedPromo, setAppliedPromo] = useState(null)
   const [isVisible, setIsVisible] = useState({})
-  const [favorites, setFavorites] = useState(new Set([2]))
+  const [favorites, setFavorites] = useState(new Set())
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false)
   const [checkoutError, setCheckoutError] = useState("")
   const [showCheckout, setShowCheckout] = useState(false)
@@ -78,6 +42,42 @@ const CartPage = () => {
     WELCOME10: { discount: 10, type: "fixed", description: "$10 off your first order" },
     FREESHIP: { discount: 0, type: "shipping", description: "Free shipping" },
   }
+
+  // Fetch cart data on component mount
+  useEffect(() => {
+    const fetchCartData = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+          const cartData = await getCart();
+          setCartItems(cartData.map(item => ({
+            id: item.id,
+            productId: item.product.id,
+            name: item.product.short_description || `Product ${item.product.id}`,
+            price: item.product.final_price || item.product.initial_price || 0,
+            originalPrice: item.product.initial_price || null,
+            image: item.product.model_image || item.product.cutout_image || "https://images.unsplash.com/photo-1595777457583-95e059d581b8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+            quantity: item.quantity,
+            size: "M", // Default size since it's not in the model
+            color: "Default", // Default color since it's not in the model
+            rating: 4.5, // Default rating
+            inStock: (item.product.stock_total || 0) > 0,
+            brand: item.product.brand_name || "Generic Brand",
+            category: item.product.merchandise_label || "Apparel",
+            description: item.product.short_description || `Discover the ${item.product.short_description || 'product'}. A high-quality product designed for comfort and style.`,
+            reviews: Math.floor(Math.random() * 200) + 50, // Random reviews
+            discount: item.product.is_on_sale ? Math.round(((item.product.initial_price - item.product.final_price) / item.product.initial_price) * 100) : 0,
+            isNew: false,
+            isWishlisted: false, // Will be updated when we fetch wishlist
+          })));
+        }
+      } catch (error) {
+        console.error('Error fetching cart data:', error);
+      }
+    };
+
+    fetchCartData();
+  }, []);
 
   // Intersection Observer for animations
   useEffect(() => {
@@ -101,25 +101,51 @@ const CartPage = () => {
     return () => observer.disconnect()
   }, [])
 
-  const updateQuantity = (id, newQuantity) => {
+  const updateQuantity = async (id, newQuantity) => {
     if (newQuantity < 1) return
-    setCartItems((items) => items.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item)))
+    try {
+      await updateCartItemQuantity(id, newQuantity);
+      setCartItems((items) => items.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item)))
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+    }
   }
 
-  const removeItem = (id) => {
-    setCartItems((items) => items.filter((item) => item.id !== id))
+  const removeItem = async (id) => {
+    try {
+      await removeFromCart(id);
+      setCartItems((items) => items.filter((item) => item.id !== id))
+    } catch (error) {
+      console.error('Error removing item:', error);
+    }
   }
 
-  const toggleFavorite = (id) => {
-    setFavorites((prev) => {
-      const newFavorites = new Set(prev)
-      if (newFavorites.has(id)) {
-        newFavorites.delete(id)
+  const toggleFavorite = async (productId) => {
+    try {
+      const cartItem = cartItems.find(item => item.id === productId);
+      if (!cartItem) return;
+      
+      const actualProductId = cartItem.productId; // Use the actual product ID
+      const isInWishlist = favorites.has(productId);
+      if (isInWishlist) {
+        // Find the wishlist item ID and remove it
+        // For now, we'll just update the local state
+        setFavorites((prev) => {
+          const newFavorites = new Set(prev)
+          newFavorites.delete(productId)
+          return newFavorites
+        })
       } else {
-        newFavorites.add(id)
+        await addToWishlist(actualProductId);
+        setFavorites((prev) => {
+          const newFavorites = new Set(prev)
+          newFavorites.add(productId)
+          return newFavorites
+        })
       }
-      return newFavorites
-    })
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+    }
   }
 
   const applyPromoCode = () => {

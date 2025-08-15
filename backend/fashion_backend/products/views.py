@@ -1,11 +1,14 @@
 from rest_framework import generics
-from .models import Product
+from .models import Product,Cart, Wishlist
 from .serializers import ProductSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .ml.search import search_by_text, search_by_image, find_similar_by_embedding
-
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .serializers import CartSerializer, WishlistSerializer
 
 class ProductListAPIView(generics.ListAPIView):
     queryset = Product.objects.all()
@@ -63,3 +66,77 @@ def get_recommendations_view(request, pk):
 
     except Product.DoesNotExist:
         return Response({"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+# CART
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_cart(request):
+    cart_items = Cart.objects.filter(user=request.user)
+    serializer = CartSerializer(cart_items, many=True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_to_cart(request):
+    serializer = CartSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def remove_from_cart(request, pk):
+    try:
+        cart_item = Cart.objects.get(pk=pk, user=request.user)
+        cart_item.delete()
+        return Response({"message": "Item removed from cart"})
+    except Cart.DoesNotExist:
+        return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_cart_item(request, pk):
+    try:
+        cart_item = Cart.objects.get(pk=pk, user=request.user)
+        quantity = request.data.get('quantity')
+        if quantity is not None and quantity > 0:
+            cart_item.quantity = quantity
+            cart_item.save()
+            serializer = CartSerializer(cart_item)
+            return Response(serializer.data)
+        else:
+            return Response({"error": "Invalid quantity"}, status=status.HTTP_400_BAD_REQUEST)
+    except Cart.DoesNotExist:
+        return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+# WISHLIST
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_wishlist(request):
+    wishlist_items = Wishlist.objects.filter(user=request.user)
+    serializer = WishlistSerializer(wishlist_items, many=True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_to_wishlist(request):
+    serializer = WishlistSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def remove_from_wishlist(request, pk):
+    try:
+        wishlist_item = Wishlist.objects.get(pk=pk, user=request.user)
+        wishlist_item.delete()
+        return Response({"message": "Item removed from wishlist"})
+    except Wishlist.DoesNotExist:
+        return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)

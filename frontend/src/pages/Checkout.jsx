@@ -18,9 +18,9 @@ import {
   Calendar,
   Clock,
 } from "lucide-react"
-import Navbar from './components/Navbar.jsx'
-import Footer from './components/Footer.jsx'
-import Animation from './components/Animation.jsx'
+import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
+import Animation from '../components/Animation'
 
 
 const Checkout = ({
