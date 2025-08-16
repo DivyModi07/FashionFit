@@ -16,6 +16,7 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
 from django.utils import timezone
+from .models import CustomUser
 
 User = get_user_model()
 
@@ -43,3 +44,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         user.last_login = timezone.now()
         user.save(update_fields=["last_login"])
         return data
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        # I've included all the fields your checkout page will need
+        fields = [
+            'id', 'email', 'first_name', 'last_name', 'phone',
+            'address', 'city', 'state', 'zipcode'
+        ]

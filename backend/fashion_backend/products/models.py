@@ -33,11 +33,28 @@ class Product(models.Model):
         return self.short_description or f"Product {self.id}"
 
 
+class Review(models.Model):
+    product = models.ForeignKey(Product, related_name='product_reviews', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    rating = models.IntegerField(default=5)
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('product', 'user') # User can only review a product once
+
+    def __str__(self):
+        return f'Review for {self.product.short_description} by {self.user.email}'
+
+
 class Cart(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'product')
 
     def __str__(self):
         return f"{self.user} - {self.product.name} ({self.quantity})"

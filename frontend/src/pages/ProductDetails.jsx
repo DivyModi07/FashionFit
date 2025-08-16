@@ -3,6 +3,7 @@ import { X, Heart, ShoppingCart, Star, Plus, Minus, Truck, Shield, RotateCcw, Ch
 import axios from "axios"
 import { addToWishlist, removeFromWishlist, checkWishlistStatus, getWishlist } from '../api/wishlist'
 import { addToCart } from '../api/cart'
+import { addRecentlyViewed } from '../utils/recentlyViewed';
 
 // --- FIX 1: Moved Mock Data Outside Component ---
 // This data doesn't change, so it doesn't need to be inside the component.
@@ -64,7 +65,7 @@ const mockProduct = {
   isWishlisted: false,
 }
 
-const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlist }) => {
+const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlist, onBuyNow }) => {
   // This is the variable that holds either the passed product or the mock product
   const displayProduct = product || mockProduct
 
@@ -79,6 +80,33 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
   const [tryOnError, setTryOnError] = useState(null)
   const [isWishlistToggled, setIsWishlistToggled] = useState(false)
   const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [showSizeChart, setShowSizeChart] = useState(false);
+
+    useEffect(() => {
+    if (isOpen && product?.id) {
+        const checkPurchaseStatus = async () => {
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await axios.get(`http://127.0.0.1:8000/api/orders/check-purchase/?product_id=${product.id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                setHasPurchased(response.data.has_purchased);
+            } catch (error) {
+                console.error("Failed to check purchase status", error);
+            }
+        };
+        checkPurchaseStatus();
+    }
+  }, [isOpen, product]);
+
+
+  useEffect(() => {
+    // When the modal opens with a valid product, add it to history
+    if (isOpen && product) {
+        addRecentlyViewed(product);
+    }
+}, [isOpen, product]);
 
   // Reset selections when product changes
   useEffect(() => {
@@ -109,15 +137,13 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
   // Carousel state for images
   const images = useMemo(() => {
     const arr = [];
-    // Fix: Use displayProduct instead of product for image sources
-    if (displayProduct?.modelImage) arr.push({ src: displayProduct.modelImage, label: "Model" });
-    if (displayProduct?.cutoutImage) arr.push({ src: displayProduct.cutoutImage, label: "Cutout" });
-    // Fallback to regular image if no model/cutout images
+    if (displayProduct?.model_image) arr.push({ src: displayProduct.model_image, label: "Model" });
+    if (displayProduct?.cutout_image) arr.push({ src: displayProduct.cutout_image, label: "Cutout" });
     if (arr.length === 0 && displayProduct?.image) {
       arr.push({ src: displayProduct.image, label: "Product" });
     }
     return arr;
-  }, [displayProduct?.modelImage, displayProduct?.cutoutImage, displayProduct?.image]);
+}, [displayProduct]); 
   
   const [carouselIndex, setCarouselIndex] = useState(0);
   useEffect(() => { setCarouselIndex(0); }, [images.length, product]);
@@ -188,17 +214,20 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
     
     setIsAddingToCart(true)
     try {
-      await addToCart(displayProduct.id, quantity)
-      // Call the parent callback if provided
-      onAddToCart?.(displayProduct.id, { size: selectedSize, color: selectedColor, quantity })
-      console.log('Product added to cart successfully')
+      // This calls the function from ProductPage, which contains the notification logic
+      if (onAddToCart) {
+        onAddToCart(displayProduct.id, { quantity });
+      } else {
+        // Fallback for safety, though prop should always be present
+        const { addToCart } = await import('../api/cart');
+        await addToCart(displayProduct.id, quantity);
+      }
     } catch (error) {
-      console.error('Error adding to cart:', error)
-      // Don't redirect here, let the API handle it
+      console.error('Error adding to cart:', error);
     } finally {
-      setIsAddingToCart(false)
+      setIsAddingToCart(false);
     }
-  }
+  };
 
   const handleQuantityChange = (change) => {
     const newQuantity = quantity + change
@@ -208,39 +237,16 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
   }
 
   // Fix: Use API calls for wishlist functionality
-  const handleWishlistToggle = async (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    
-    if (!displayProduct?.id) return
-    
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      console.log('No token found, redirecting to login');
-      window.location.href = '/login';
-      return;
-    }
-    
-    try {
-      if (isWishlistToggled) {
-        // Find the wishlist item ID first
-        const wishlist = await getWishlist();
-        const wishlistItem = wishlist.find(item => item.product.id === displayProduct.id);
-        if (wishlistItem) {
-          await removeFromWishlist(wishlistItem.id);
-        }
-      } else {
-        await addToWishlist(displayProduct.id)
-      }
-      
-      setIsWishlistToggled(!isWishlistToggled)
-      // Call the parent callback if provided
-      onToggleWishlist?.(displayProduct.id)
-    } catch (error) {
-      console.error('Error toggling wishlist:', error)
-      // Don't redirect here, let the API handle it
-    }
-  }
+const handleWishlistToggle = (e) => {
+  e.stopPropagation();
+  if (!displayProduct?.id) return;
+
+  // 1. Tell the parent page (ProductPage) to do all the hard work
+  onToggleWishlist(displayProduct.id);
+  
+  // 2. Immediately update the heart icon for a fast UI response
+  setIsWishlistToggled(!isWishlistToggled);
+};
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -252,6 +258,21 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
 
       {/* Modal Container */}
       <div className="relative bg-white rounded-3xl shadow-2xl max-w-7xl w-full mx-4 max-h-[95vh] overflow-hidden transform transition-all duration-300 scale-100">
+      {showSizeChart && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={() => setShowSizeChart(false)}>
+          <div className="bg-white p-8 rounded-lg animate-fade-in-up" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-bold mb-4">Size Chart (Men's Tops)</h2>
+            <table className="w-full text-left">
+              <thead><tr><th className="p-2">Size</th><th className="p-2">Chest (in)</th><th className="p-2">Waist (in)</th></tr></thead>
+              <tbody>
+                <tr><td className="p-2">S</td><td className="p-2">36-38</td><td className="p-2">30-32</td></tr>
+                <tr><td className="p-2">M</td><td className="p-2">38-40</td><td className="p-2">32-34</td></tr>
+                <tr><td className="p-2">L</td><td className="p-2">40-42</td><td className="p-2">34-36</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -341,19 +362,21 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
                   <span className="inline-block bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-bold">
                     {displayProduct?.brand}
                   </span>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-5 h-5 ${
-                            i < Math.floor(displayProduct?.rating || 0) ? "text-yellow-400 fill-current" : "text-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-gray-600 font-medium">({displayProduct?.reviews})</span>
-                  </div>
+                  {displayProduct.rating && (
+  <div className="flex items-center gap-2">
+    <div className="flex items-center">
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          className={`w-5 h-5 ${
+            i < Math.floor(4.5) ? "text-yellow-400 fill-current" : "text-gray-300"
+          }`}
+        />
+      ))}
+    </div>
+    <span className="text-gray-600 font-medium">(4.5)</span>
+  </div>
+)}
                 </div>
                 {/* Product Name */}
                 <h1 className="text-4xl xl:text-5xl font-bold text-gray-900 mb-6 leading-tight">
@@ -391,6 +414,9 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
                   {displayProduct.sizes && displayProduct.sizes.length > 0 && (
                     <div>
                       <h3 className="text-xl font-bold text-gray-900 mb-4">Choose Size</h3>
+                      <button onClick={() => setShowSizeChart(true)} className="text-sm font-medium text-purple-600">
+                        Size Chart
+                      </button>
                       <div className="flex flex-wrap gap-3">
                         {displayProduct.sizes.map((size) => (
                           <button
@@ -553,7 +579,14 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
                       </>
                     )}
                   </button>
-                  <button className="px-8 py-4 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 font-bold text-lg">
+                  <button
+                        onClick={() => onBuyNow({ 
+                          ...displayProduct, 
+                          quantity: quantity, 
+                          size: selectedSize, 
+                          color: selectedColor 
+                        })}
+                  className="px-8 py-4 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 font-bold text-lg">
                     Buy Now
                   </button>
                 </div>
@@ -581,28 +614,28 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
           <div className="border-t border-gray-200 bg-gray-50">
             <div className="max-w-7xl mx-auto px-8 py-8">
               {/* Tab Navigation */}
-              <div className="flex gap-8 mb-8">
-                <button
-                  onClick={() => setActiveTab("details")}
-                  className={`text-xl font-bold pb-4 border-b-4 transition-all duration-300 ${
-                    activeTab === "details"
-                      ? "border-purple-500 text-purple-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  Product Details
-                </button>
-                <button
-                  onClick={() => setActiveTab("reviews")}
-                  className={`text-xl font-bold pb-4 border-b-4 transition-all duration-300 ${
-                    activeTab === "reviews"
-                      ? "border-purple-500 text-purple-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  Reviews ({mockReviews.length})
-                </button>
-              </div>
+              <div className="flex border-b">
+  <button
+    className={`px-4 py-2 -mb-px font-medium ${
+      activeTab === "details"
+        ? "text-purple-600 border-b-2 border-purple-600"
+        : "text-gray-500 hover:text-purple-600"
+    }`}
+    onClick={() => setActiveTab("details")}
+  >
+    Product Details
+  </button>
+  <button
+    className={`px-4 py-2 -mb-px font-medium ${
+      activeTab === "reviews"
+        ? "text-purple-600 border-b-2 border-purple-600"
+        : "text-gray-500 hover:text-purple-600"
+    }`}
+    onClick={() => setActiveTab("reviews")}
+  >
+    Reviews
+  </button>
+</div>
 
               {/* Tab Content */}
               {activeTab === "details" && (
@@ -621,11 +654,16 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
                         <span className="text-lg font-medium text-gray-600">Merchant ID</span>
                         <span className="text-lg font-bold text-gray-900">{displayProduct?.merchant_id || 'N/A'}</span>
                       </div>
+                      <div className="flex justify-between items-center py-4 border-b border-gray-100">
+                          <span className="text-lg font-bold text-gray-900">
+                          Category: {displayProduct?.merchandise_label || 'N/A'}
+                          </span>
+                      </div>
                     </div>
                     <div className="space-y-6">
                       <div className="flex justify-between items-center py-4 border-b border-gray-100">
                         <span className="text-lg font-medium text-gray-600">In Stock</span>
-                        <span className={`text-lg font-bold ${displayProduct?.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>{displayProduct?.stock > 0 ? 'Available' : 'Not Available'}</span>
+                        <span className={`text-lg font-bold ${displayProduct?.stock_total > 0 ? 'text-green-600' : 'text-red-600'}`}>{displayProduct?.stock_total > 0 ? 'Available' : 'Not Available'}</span>
                       </div>
                       <div className="flex justify-between items-center py-4 border-b border-gray-100">
                         <span className="text-lg font-medium text-gray-600">Category</span>
@@ -640,75 +678,28 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
                 </div>
               )}
 
-              {activeTab === "reviews" && (
-                <div className="space-y-8">
-                  {/* Reviews Summary */}
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-8 border border-purple-200">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-                      <div className="text-center md:text-left">
-                        <div className="flex items-center justify-center md:justify-start gap-4 mb-4">
-                          <span className="text-6xl font-bold text-gray-900">{displayProduct?.rating}</span>
-                          <div>
-                            <div className="flex items-center mb-2">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`w-6 h-6 ${
-                                    i < Math.floor(displayProduct?.rating || 0) ? "text-yellow-400 fill-current" : "text-gray-300"
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                            <p className="text-gray-600 font-medium">{displayProduct?.reviews} reviews</p>
-                          </div>
-                        </div>
-                      </div>
-                      <button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 font-bold text-lg shadow-lg transform hover:scale-105">
-                        Write Review
-                      </button>
-                    </div>
-                  </div>
 
-                  {/* Reviews List */}
-                  <div className="space-y-6">
-                    {mockReviews.map((review) => (
-                      <div key={review.id} className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-                        <div className="flex items-start justify-between mb-4">
-                          <div>
-                            <div className="flex items-center gap-4 mb-2">
-                              <span className="text-xl font-bold text-gray-900">{review.name}</span>
-                              {review.verified && (
-                                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold">
-                                  ✓ Verified
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <div className="flex items-center">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`w-5 h-5 ${
-                                      i < review.rating ? "text-yellow-400 fill-current" : "text-gray-300"
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-gray-500 font-medium">
-                                {new Date(review.date).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <p className="text-gray-700 text-lg leading-relaxed mb-4">{review.comment}</p>
-                        <button className="text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200">
-                          👍 Helpful ({review.helpful})
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+{activeTab === "reviews" && (
+  <div className="space-y-8 p-8">
+    {/* This button is no longer conditional and will always show */}
+
+
+    {/* This now maps over your reliable mockReviews */}
+    {mockReviews.map((review) => (
+      <div key={review.id} className="bg-white rounded-2xl p-6 shadow-lg">
+        <p className="font-bold">{review.name}</p>
+        <div className="flex items-center my-1">
+          <Star className="w-4 h-4 text-yellow-400 fill-current mr-1"/> {review.rating}/5
+        </div>
+        <p className="text-gray-700">{review.comment}</p>
+        <button className="text-purple-600 font-medium mt-2 text-sm">
+          👍 Helpful ({review.helpful})
+        </button>
+      </div>
+    ))}
+  </div>
+)}
+
             </div>
           </div>
         </div>
@@ -729,3 +720,6 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
 }
 
 export default ProductDetails
+
+
+

@@ -21,6 +21,7 @@ import Animation from '../components/Animation'
 import { getCart, removeFromCart, updateCartItemQuantity } from '../api/cart'
 import { addToWishlist, removeFromWishlist } from '../api/wishlist'
 
+
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([])
 
@@ -51,33 +52,27 @@ const CartPage = () => {
         if (token) {
           const cartData = await getCart();
           setCartItems(cartData.map(item => ({
+            ...item.product,
             id: item.id,
-            productId: item.product.id,
-            name: item.product.short_description || `Product ${item.product.id}`,
-            price: item.product.final_price || item.product.initial_price || 0,
-            originalPrice: item.product.initial_price || null,
-            image: item.product.model_image || item.product.cutout_image || "https://images.unsplash.com/photo-1595777457583-95e059d581b8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-            quantity: item.quantity,
-            size: "M", // Default size since it's not in the model
-            color: "Default", // Default color since it's not in the model
-            rating: 4.5, // Default rating
+            name: item.product.short_description || "Unnamed Product",
+            brand: item.product.brand_name || "No Brand",
+            price: Number(item.product.final_price) || 0,
+            originalPrice: Number(item.product.initial_price) || 0,
+            image: item.product.model_image || item.product.cutout_image || "/placeholder.svg",
             inStock: (item.product.stock_total || 0) > 0,
-            brand: item.product.brand_name || "Generic Brand",
-            category: item.product.merchandise_label || "Apparel",
-            description: item.product.short_description || `Discover the ${item.product.short_description || 'product'}. A high-quality product designed for comfort and style.`,
-            reviews: Math.floor(Math.random() * 200) + 50, // Random reviews
-            discount: item.product.is_on_sale ? Math.round(((item.product.initial_price - item.product.final_price) / item.product.initial_price) * 100) : 0,
-            isNew: false,
-            isWishlisted: false, // Will be updated when we fetch wishlist
+            discount: item.product.is_on_sale ? parseInt(item.product.discount_label?.replace('% Off', '') || "0", 10) : 0,
+            isOnSale: item.product.is_on_sale,
+            rating: 4.5, // Dummy rating
+            reviews: [], // Dummy reviews
+            quantity: item.quantity,
           })));
         }
       } catch (error) {
         console.error('Error fetching cart data:', error);
       }
     };
-
     fetchCartData();
-  }, []);
+}, []);
 
   // Intersection Observer for animations
   useEffect(() => {
@@ -163,8 +158,13 @@ const CartPage = () => {
   }
 
   const calculateSubtotal = () => {
-    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  }
+    // Add number conversion and fallbacks to prevent NaN
+    return cartItems.reduce((sum, item) => {
+      const price = Number(item.price) || 0;
+      const quantity = Number(item.quantity) || 1;
+      return sum + price * quantity;
+    }, 0);
+  };
 
   const calculateDiscount = () => {
     if (!appliedPromo) return 0
@@ -178,11 +178,16 @@ const CartPage = () => {
     return 0
   }
 
-  const calculateShipping = () => {
-    if (appliedPromo?.type === "shipping") return 0
-    const subtotal = calculateSubtotal()
-    return subtotal > 100 ? 0 : 9.99
-  }
+// Inside CartPage.jsx
+
+const calculateShipping = () => {
+  // --- FIX: Add this line ---
+  if (cartItems.length === 0) return 0;
+  
+  if (appliedPromo?.type === "shipping") return 0
+  const subtotal = calculateSubtotal()
+  return subtotal > 100 ? 0 : 9.99
+}
 
   const calculateTotal = () => {
     return calculateSubtotal() - calculateDiscount() + calculateShipping()
@@ -246,26 +251,11 @@ const CartPage = () => {
   }
 
   const handleViewDetails = (item) => {
-    // Transform item to fit ProductDetails component's expected props
-    const productForDetails = {
-      ...item,
-      sizes: item.size ? [item.size] : [], // Assuming cart item has a single size
-      colors: item.color ? [item.color] : [], // Assuming cart item has a single color
-      brand: item.brand || "Generic Brand", // Add default if not present
-      category: item.category || "Apparel",
-      description:
-        item.description || `Discover the ${item.name}. A high-quality product designed for comfort and style.`,
-      reviews: item.reviews || Math.floor(Math.random() * 200) + 50, // Random reviews if not present
-      discount:
-        item.originalPrice && item.price
-          ? Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)
-          : 0,
-      isNew: false, // Assuming cart items are not "new" in this context
-      isWishlisted: favorites.has(item.id), // Pass current wishlist status
-    }
-    setSelectedProductForDetails(productForDetails)
-    setShowProductDetails(true)
-  }
+    // The 'item' object already has all the full product details.
+    // We just pass it directly to the modal.
+    setSelectedProductForDetails(item);
+    setShowProductDetails(true);
+  };
 
   const handleCloseProductDetails = () => {
     setShowProductDetails(false)
@@ -404,7 +394,7 @@ const CartPage = () => {
                   <h3 className="text-2xl font-semibold text-gray-600 mb-2">Your cart is empty</h3>
                   <p className="text-gray-500 mb-6">Add some items to get started</p>
                   <button
-                    onClick={() => handleButtonClick("start-shopping")}
+                    onClick={() =>(window.location.href = "/products")}
                     className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-full font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105"
                   >
                     Start Shopping
@@ -466,9 +456,9 @@ const CartPage = () => {
                             </div>
 
                             <div className="flex items-center mb-2">
-                              {renderStars(item.rating)}
-                              <span className="text-sm text-gray-500 ml-2">({item.rating})</span>
-                            </div>
+    {renderStars(item.rating)}
+    <span className="text-sm text-gray-500 ml-2">({item.rating})</span>
+  </div>
 
                             <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
                               <span>
@@ -482,11 +472,18 @@ const CartPage = () => {
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                               {/* Price */}
                               <div className="flex items-center space-x-2">
-                                <span className="text-2xl font-bold text-gray-900">${item.price}</span>
-                                {item.originalPrice && (
-                                  <span className="text-lg text-gray-500 line-through">${item.originalPrice}</span>
-                                )}
-                              </div>
+  {item.isOnSale && item.discount > 0 ? (
+    <>
+      <span className="text-lg font-bold text-red-600">${item.price.toFixed(2)}</span>
+      <span className="text-sm text-gray-500 line-through">${item.originalPrice.toFixed(2)}</span>
+      <span className="text-sm font-semibold text-green-600">
+        Save {item.discount}% today
+      </span>
+    </>
+  ) : (
+    <span className="text-lg font-bold text-gray-900">${item.originalPrice.toFixed(2)}</span>
+  )}
+</div>
 
                               {/* Quantity and Actions */}
                               <div className="flex items-center space-x-4">

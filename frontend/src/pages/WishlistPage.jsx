@@ -21,6 +21,8 @@ import ProductDetails from "./ProductDetails"
 import { getWishlist, removeFromWishlist } from '../api/wishlist'
 import { addToCart } from '../api/cart'
 
+
+
 const WishlistPage = () => {
   const [cart, setCart] = useState([])
   const [notification, setNotification] = useState(null)
@@ -47,24 +49,19 @@ const WishlistPage = () => {
         if (token) {
           const wishlistData = await getWishlist();
           const transformedItems = wishlistData.map(item => ({
+            ...item.product,
             id: item.id,
-            productId: item.product.id,
-            name: item.product.short_description || `Product ${item.product.id}`,
-            price: item.product.final_price || item.product.initial_price || 0,
-            originalPrice: item.product.initial_price || null,
-            image: item.product.model_image || item.product.cutout_image || "https://images.unsplash.com/photo-1595777457583-95e059d581b8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
-            rating: 4.5, // Default rating
-            discount: item.product.is_on_sale ? Math.round(((item.product.initial_price - item.product.final_price) / item.product.initial_price) * 100) : 0,
-            category: item.product.merchandise_label || "Apparel",
-            addedDate: item.added_at,
+            name: item.product.short_description || "Unnamed Product",
+            brand: item.product.brand_name || "No Brand",
+            price: Number(item.product.final_price) || 0,
+            originalPrice: Number(item.product.initial_price) || 0,
+            image: item.product.model_image || item.product.cutout_image || "/placeholder.svg",
             inStock: (item.product.stock_total || 0) > 0,
-            colors: ["Default"], // Default colors
-            sizes: ["M"], // Default sizes
-            brand: item.product.brand_name || "Generic Brand",
-            description: item.product.short_description || `Discover the ${item.product.short_description || 'product'}. A high-quality product designed for comfort and style.`,
-            reviews: Math.floor(Math.random() * 200) + 50, // Random reviews
-            isNew: false,
-            isWishlisted: true,
+            discount: item.product.is_on_sale ? parseInt(item.product.discount_label?.replace('% Off', '') || "0", 10) : 0,
+            isOnSale: item.product.is_on_sale,
+            rating: 4.5, // Dummy rating
+            reviews: [], // Dummy reviews
+            addedDate: item.added_at,
           }));
           setWishlistItems(transformedItems);
           setFavorites(new Set(transformedItems.map(item => item.id)));
@@ -73,10 +70,8 @@ const WishlistPage = () => {
         console.error('Error fetching wishlist data:', error);
       }
     };
-
     fetchWishlistData();
-  }, []);
-
+}, []);
   // Intersection Observer for animations
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -104,7 +99,7 @@ const WishlistPage = () => {
     if (!product || !product.inStock) return
 
     try {
-      await addToCart(product.productId, options.quantity || 1);
+      await addToCart(productId, options.quantity || 1);
       showNotification(`${product.name} added to cart!`, "success")
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -356,7 +351,7 @@ const WishlistPage = () => {
   const filteredItems = wishlistItems
     .filter((item) => favorites.has(item.id)) // Only show favorited items
     .filter((item) => {
-      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesSearch = (item.name || '').toLowerCase().includes(searchQuery.toLowerCase())
       const matchesFilter =
         filterBy === "all" ||
         (filterBy === "in-stock" && item.inStock) ||
@@ -427,14 +422,23 @@ const WishlistPage = () => {
       <div className="p-4">
         <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{item.name}</h3>
         <div className="flex items-center mb-2">
-          {renderStars(item.rating)}
-          <span className="text-sm text-gray-500 ml-2">({item.rating})</span>
-        </div>
+    {renderStars(item.rating)}
+    <span className="text-sm text-gray-500 ml-2">({item.rating})</span>
+  </div>
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <span className="text-lg font-bold text-gray-900">${item.price}</span>
-            {item.originalPrice && <span className="text-sm text-gray-500 line-through">${item.originalPrice}</span>}
-          </div>
+        <div className="flex items-center space-x-2">
+  {item.isOnSale && item.discount > 0 ? (
+    <>
+      <span className="text-lg font-bold text-red-600">${item.price.toFixed(2)}</span>
+      <span className="text-sm text-gray-500 line-through">${item.originalPrice.toFixed(2)}</span>
+      <span className="text-sm font-semibold text-green-600">
+        Save {item.discount}% today
+      </span>
+    </>
+  ) : (
+    <span className="text-lg font-bold text-gray-900">${item.originalPrice.toFixed(2)}</span>
+  )}
+</div>
           <span className="text-sm text-gray-500">{item.category}</span>
         </div>
         <div className="flex items-center justify-between">

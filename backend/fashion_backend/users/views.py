@@ -1,3 +1,4 @@
+from rest_framework.views import APIView
 import random
 from django.core.mail import send_mail
 from django.http import JsonResponse
@@ -12,8 +13,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import CustomTokenObtainPairSerializer
+from .serializers import CustomTokenObtainPairSerializer,UserProfileSerializer
 from django.utils import timezone
+
+from rest_framework.permissions import IsAuthenticated
 
 User = get_user_model()
 
@@ -151,3 +154,9 @@ def reset_password(request):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data)

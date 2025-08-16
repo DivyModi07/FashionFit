@@ -77,7 +77,7 @@ const Footer = () => {
                     <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse-slow">
                       <span className="text-white font-bold text-lg">F</span>
                     </div>
-                    <span className="ml-2 text-xl font-bold">FashionAI</span>
+                    <span className="ml-2 text-xl font-bold">FashionFit</span>
                   </div>
                   <p className="text-gray-400 mb-4">
                     AI-powered fashion discovery platform that helps you find your perfect style.
@@ -120,15 +120,15 @@ const Footer = () => {
                   <div className="space-y-2">
                     <div className="flex items-center text-gray-400 hover:text-white transition-colors transform hover:translate-x-2 duration-300">
                       <Mail className="w-4 h-4 mr-2" />
-                      <span>hello@fashionai.com</span>
+                      <span>hello@fashiofit.com</span>
                     </div>
                     <div className="flex items-center text-gray-400 hover:text-white transition-colors transform hover:translate-x-2 duration-300">
                       <Phone className="w-4 h-4 mr-2" />
-                      <span>+1 (555) 123-4567</span>
+                      <span>+91 9999999999</span>
                     </div>
                     <div className="flex items-center text-gray-400 hover:text-white transition-colors transform hover:translate-x-2 duration-300">
                       <MapPin className="w-4 h-4 mr-2" />
-                      <span>San Francisco, CA</span>
+                      <span>Mumbai, Maharashtra</span>
                     </div>
                   </div>
                 </div>
@@ -136,7 +136,7 @@ const Footer = () => {
               
               <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
                 <p className="text-gray-400 text-sm">
-                  © 2025 FashionAI. All rights reserved.
+                  © 2025 FashionFit. All rights reserved.
                 </p>
                 <div className="flex space-x-6 mt-4 md:mt-0">
                   <button onClick={() => handleButtonClick('privacy')} className="text-gray-400 hover:text-white text-sm transition-colors transform hover:scale-105 duration-300">

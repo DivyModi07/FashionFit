@@ -21,7 +21,8 @@ import {
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import Animation from '../components/Animation'
-
+import { placeOrder } from "../api/order"; // --- NEW: Import the placeOrder function ---
+import axios from 'axios';
 
 const Checkout = ({
   cartItems,
@@ -39,6 +40,7 @@ const Checkout = ({
   const [showAddAddress, setShowAddAddress] = useState(false)
   const [orderPlaced, setOrderPlaced] = useState(false)
   const [orderId, setOrderId] = useState("")
+  const [errorMessage, setErrorMessage] = useState(""); // --- NEW: State for error messages ---
 
   // New state for payment details
   const [cardDetails, setCardDetails] = useState({
@@ -49,30 +51,40 @@ const Checkout = ({
   })
   const [upiId, setUpiId] = useState("")
 
-  const [addresses, setAddresses] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      phone: "+1 234-567-8900",
-      address: "123 Main Street, Apt 4B",
-      city: "New York",
-      state: "NY",
-      zipCode: "10001",
-      isDefault: true,
-      type: "Home",
-    },
-    {
-      id: 2,
-      name: "John Doe",
-      phone: "+1 234-567-8900",
-      address: "456 Business Ave, Suite 200",
-      city: "New York",
-      state: "NY",
-      zipCode: "10002",
-      isDefault: false,
-      type: "Office",
-    },
-  ])
+  const [addresses, setAddresses] = useState([]);
+  useEffect(() => {
+    const fetchUserAddress = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        const response = await axios.get('http://127.0.0.1:8000/api/users/profile/', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        const user = response.data;
+        if (user.address) {
+          // Format the fetched address to match the structure your component expects
+          const formattedAddress = {
+            id: 1,
+            name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+            phone: user.phone || "", // Uses the 'phone' field from your model
+            address: user.address,
+            city: user.city || "",
+            state: user.state || "",
+            zipCode: user.zipcode || "", // Note: model has 'zipcode', not 'zipCode'
+            isDefault: true,
+            type: "Home",
+          };
+          setAddresses([formattedAddress]);
+          setSelectedAddress(formattedAddress);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user address:", error);
+      }
+    };
+
+    fetchUserAddress();
+  }, []); // The empty array ensures this runs only once on mount
+
 
   const [newAddress, setNewAddress] = useState({
     name: "",
@@ -84,7 +96,10 @@ const Checkout = ({
     type: "Home",
   })
 
-  const paymentMethods = [
+  // --- (The rest of the component state and functions like `paymentMethods`, `useEffect`, etc., remain the same) ---
+
+  // ... (keep all your existing functions like handleAddAddress, isPaymentValid, renderStars)
+    const paymentMethods = [
     {
       id: 1,
       type: "card",
@@ -179,25 +194,36 @@ const Checkout = ({
     // For wallet and netbanking, assume valid if selected
     return true
   }
-
+  
+  // --- UPDATED: This is the main change ---
   const handlePlaceOrder = async () => {
-    setIsLoading(true)
+    if (!selectedAddress) {
+      setErrorMessage("Please select a shipping address.");
+      return;
+    }
 
-    // Log collected payment details (for demonstration)
-    console.log("Placing order with payment details:", {
-      method: selectedPayment?.name,
-      card: selectedPayment?.type === "card" ? cardDetails : undefined,
-      upi: selectedPayment?.type === "upi" ? upiId : undefined,
-    })
+    setIsLoading(true);
+    setErrorMessage("");
 
-    // Simulate order processing
-    await new Promise((resolve) => setTimeout(resolve, 3000))
+    // Format the address into a string for the backend TextField
+    const formattedAddress = `${selectedAddress.name}\n${selectedAddress.address}\n${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.zipCode}\nPhone: ${selectedAddress.phone}`;
 
-    const newOrderId = `ORD${Date.now().toString().slice(-8)}`
-    setOrderId(newOrderId)
-    setOrderPlaced(true)
-    setIsLoading(false)
-  }
+    try {
+      const orderData = await placeOrder({
+        shipping_address: formattedAddress,
+        billing_address: formattedAddress, // Using the same address for billing
+      });
+
+      if (orderData) {
+        setOrderId(orderData.id); // Use the real order ID from the backend
+        setOrderPlaced(true);
+      }
+    } catch (error) {
+      setErrorMessage(error.message || "Failed to place order. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const renderStars = (rating) => {
     return [...Array(5)].map((_, i) => (
@@ -207,7 +233,9 @@ const Checkout = ({
       />
     ))
   }
+  // --- (The rest of the component's JSX remains the same) ---
 
+  // --- UPDATED: Add a place to display the error message in the Review step ---
   if (orderPlaced) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 flex items-center justify-center">
@@ -224,7 +252,7 @@ const Checkout = ({
             <div className="bg-gray-50 rounded-2xl p-6 mb-8">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-gray-600">Order ID:</span>
-                <span className="font-bold text-lg">{orderId}</span>
+                <span className="font-bold text-lg">#{orderId}</span>
               </div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-gray-600">Total Amount:</span>
@@ -262,12 +290,6 @@ const Checkout = ({
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
-                onClick={() => (window.location.href = "/orders")}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-full font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105"
-              >
-                Track Order
-              </button>
-              <button
                 onClick={() => (window.location.href = "/")}
                 className="border-2 border-purple-500 text-purple-500 px-8 py-3 rounded-full font-semibold hover:bg-purple-50 transition-all duration-300"
               >
@@ -279,8 +301,11 @@ const Checkout = ({
       </div>
     )
   }
-
   return (
+    // ... your existing JSX ...
+    // --- Inside the "Review Order" step (currentStep === 3) ---
+    // --- Add this block right above the "Back" and "Place Order" buttons ---
+    // ...
     <>
     <Navbar />
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100  mt-[60px]">
@@ -299,30 +324,6 @@ const Checkout = ({
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 text-center">
             <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Checkout</span>
           </h1>
-
-          {/* Progress Steps */}
-          {/* <div className="flex items-center justify-center mb-8">
-            {steps.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <div
-                  className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ${
-                    currentStep >= step.id
-                      ? "bg-purple-500 border-purple-500 text-white"
-                      : "border-gray-300 text-gray-400"
-                  }`}
-                >
-                  {currentStep > step.id ? <Check className="w-6 h-6" /> : <step.icon className="w-6 h-6" />}
-                </div>
-                <span className={`ml-2 font-medium ${currentStep >= step.id ? "text-purple-600" : "text-gray-400"}`}>
-                  {step.name}
-                </span>
-                {index < steps.length - 1 && (
-                  <div className={`w-16 h-0.5 mx-4 ${currentStep > step.id ? "bg-purple-500" : "bg-gray-300"}`} />
-                )}
-              </div>
-            ))}
-          </div>
-         */}
         <div className="max-w-2xl mx-auto mb-12">
                     <div className="flex items-center justify-between">
                       {stepTitles.map((title, index) => (
@@ -664,14 +665,14 @@ const Checkout = ({
                             <span className="text-sm text-gray-500 ml-2">({item.rating})</span>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-bold text-lg">${(item.price * item.quantity).toFixed(2)}</div>
-                          {item.originalPrice && (
-                            <div className="text-sm text-gray-500 line-through">
-                              ${(item.originalPrice * item.quantity).toFixed(2)}
-                            </div>
-                          )}
-                        </div>
+                      <div className="text-right">                    
+                        <div className="font-bold text-lg">${((item.price || item.finalPrice || item.initialPrice) * item.quantity).toFixed(2)}</div>
+                  {(item.originalPrice || item.initialPrice) > (item.price || item.finalPrice) && (
+                    <div className="text-sm text-gray-500 line-through">
+                        ${(item.originalPrice || item.initialPrice * item.quantity).toFixed(2)}
+                    </div>
+                  )}
+                  </div>
                       </div>
                     ))}
                   </div>
@@ -736,7 +737,11 @@ const Checkout = ({
                     </div>
                   )}
                 </div>
-
+                {errorMessage && (
+                    <div className="my-4 p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg">
+                        {errorMessage}
+                    </div>
+                )}
                 <div className="flex gap-4">
                   <button
                     onClick={() => setCurrentStep(2)}
@@ -792,9 +797,9 @@ const Checkout = ({
 
               {/* Price Breakdown */}
               <div className="space-y-3 mb-6">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal ({cartItems.length} items)</span>
-                  <span className="font-semibold">${calculateSubtotal().toFixed(2)}</span>
+              <div className="flex justify-between">
+                    <span className="text-gray-600">Subtotal ({cartItems.length} items)</span>
+                    <span className="font-semibold">${(calculateSubtotal() || 0).toFixed(2)}</span>
                 </div>
 
                 {appliedPromo && calculateDiscount() > 0 && (
@@ -812,9 +817,9 @@ const Checkout = ({
                 </div>
 
                 <div className="border-t pt-3">
-                  <div className="flex justify-between text-xl font-bold">
-                    <span>Total</span>
-                    <span className="text-purple-600">${calculateTotal().toFixed(2)}</span>
+                <div className="flex justify-between text-xl font-bold">
+                      <span>Total</span>
+                      <span className="text-purple-600">${(calculateTotal() || 0).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -866,4 +871,4 @@ const Checkout = ({
   )
 }
 
-export default Checkout
+export default Checkout;

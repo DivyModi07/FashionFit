@@ -1,10 +1,21 @@
 import { useState, useEffect } from "react"
-import { Search, Heart, ShoppingCart, Filter, Grid, List, Star, X, Plus, Eye, ArrowUpDown, Camera } from "lucide-react"
+import { Search, Heart, ShoppingCart, Filter, Grid, List, Star, X, Plus, Eye, ArrowUpDown, Camera,CheckCircle } from "lucide-react"
 import ProductDetails from "./ProductDetails.jsx"
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import Animation from '../components/Animation.jsx'
 import axios from "axios";
+import CheckoutFlow from "./Checkout.jsx";
+
+const Notification = ({ message, show }) => {
+  if (!show) return null;
+  return (
+    <div className="fixed top-20 right-5 z-[100] bg-green-500 text-white py-3 px-6 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in-up">
+      <CheckCircle className="w-6 h-6" />
+      <span className="font-semibold">{message}</span>
+    </div>
+  );
+};
 
 const ProductPage = () => {
   const [isVisible, setIsVisible] = useState({})
@@ -13,6 +24,11 @@ const ProductPage = () => {
   const [sortBy, setSortBy] = useState("popularity")
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
+  const [itemToCheckout, setItemToCheckout] = useState(null);
+  const [showCheckout, setShowCheckout] = useState(false);
+
+  // --- NEW: State for Notifications ---
+  const [notification, setNotification] = useState({ show: false, message: '' });
 
   // Product Details Modal State
   const [selectedProduct, setSelectedProduct] = useState(null)
@@ -48,6 +64,20 @@ const ProductPage = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [imageSearchFile, setImageSearchFile] = useState(null)
 const [products,setProducts]=useState([])
+
+  // --- NEW: Function to show notifications ---
+  const showNotification = (message) => {
+    setNotification({ show: true, message });
+    setTimeout(() => {
+      setNotification({ show: false, message: '' });
+    }, 3000); // Hide after 3 seconds
+  };
+  
+  // --- NEW: Function to handle "Buy Now" clicks ---
+  const handleBuyNow = (item) => {
+    setItemToCheckout(item);
+    setShowCheckout(true);
+  };
 
 // Dynamically generate unique types from products for category filter
 const availableTypes = Array.from(new Set(products.map(p => p.type).filter(Boolean))).sort();
@@ -113,45 +143,33 @@ const filteredAndSortedProducts = products
   useEffect(() => {
     axios.get('http://127.0.0.1:8000/api/products/all/')
       .then(res => {
-        console.log("✅ DATA FROM API:", res.data);
-        const mapped = res.data.map((item, index) => {
-          // Extract type from short_description (last word, lowercased)
-          let type = '';
-          if (item.short_description) {
-            const words = item.short_description.trim().split(' ');
-            type = words.length > 0 ? words[words.length - 1].toLowerCase() : '';
-          }
-          return {
-            id: item.id || index,
-            name: item.short_description || "No name",
-            brand: item.brand_name,
-            finalPrice: Number(item.final_price) || 0,
-            initialPrice: Number(item.initial_price) || 0,
-            isOnSale: !!item.is_on_sale,
-            discount: item.is_on_sale ? parseInt(item.discount_label?.replace('% Off', '') || "0", 10) : 0,
-            merchandiseLabel: item.merchandise_label || "",
-            rating: 4.5, // Default rating since API doesn't provide
-            reviews: Math.floor(Math.random() * 50) + 10, // Random reviews count
-            reviewList: [], // Empty array since API doesn't provide
-            image: item.model_image || "/placeholder.png",
-            modelImage: item.model_image,
-            cutoutImage: item.cutout_image,
-            description: item.short_description || "",
-            type, // new type field
-            currency: item.currency || "USD",
-            isWishlisted: false,
-            stock: Number(item.stock_total) || 0,
-            isCustomizable: !!item.is_customizable,
-            brand_id: item.brand_id,
-            merchant_id: item.merchant_id,
-            product_id: item.product_id,
-          };
-        });
-        console.log("✅ MAPPED PRODUCTS:", mapped);
+        // This manual mapping creates a stable "frontend" product object
+        const mapped = res.data.map(item => ({
+          ...item, // Keep all original data from the backend
+          id: item.id,
+          name: item.short_description || "Unnamed Product",
+          brand: item.brand_name || "No Brand",
+          price: Number(item.final_price) || 0,
+          finalPrice: Number(item.final_price) || 0,
+          initialPrice: Number(item.initial_price) || 0,
+          originalPrice: Number(item.initial_price) || 0,
+          image: item.model_image || item.cutout_image || "/placeholder.svg",
+          modelImage: item.model_image,
+          cutoutImage: item.cutout_image,
+          description: item.short_description || "",
+          inStock: (item.stock_total || 0) > 0, // Fixes the stock issue
+          isOnSale: item.is_on_sale,
+          discount: item.is_on_sale ? parseInt(item.discount_label?.replace('% Off', '') || "0", 10) : 0,
+          
+          // --- Using Dummy Data As Requested ---
+          rating: 4.5, 
+          reviews: [], // Using the mockReviews from ProductDetails.jsx for now
+        }));
+        
         setProducts(mapped);
       })
       .catch(err => console.error("❌ Failed to fetch products:", err));
-  }, []);
+}, []);
 
   
   // Filter options
@@ -162,6 +180,35 @@ const filterOptions = {
   colors: ["Black", "White", "Blue", "Red", "Pink", "Navy", "Gray", "Brown", "Green", "Beige", "Burgundy"],
   discounts: [10, 20, 30, 50],
 }
+
+ useEffect(() => {
+    // This function runs after the products have been fetched
+    const syncWishlistStatus = async () => {
+      // Don't run if there are no products loaded yet
+      if (products.length === 0) return;
+
+      try {
+        const { getWishlist } = await import('../api/wishlist');
+        const wishlistItems = await getWishlist();
+        
+        // Create a simple set of wishlisted product IDs for quick checking
+        const wishlistedIds = new Set(wishlistItems.map(item => item.product.id));
+
+        // Update the products state with the correct wishlist status
+        setProducts(currentProducts =>
+          currentProducts.map(product => ({
+            ...product,
+            isWishlisted: wishlistedIds.has(product.id),
+          }))
+        );
+      } catch (error) {
+        // This might happen if the user is not logged in, which is okay.
+        console.log("Could not sync wishlist, user may not be logged in.");
+      }
+    };
+
+    syncWishlistStatus();
+  }, [products.length]); // Re-run only when the number of products changes
 
   // Intersection Observer for animations
   useEffect(() => {
@@ -183,7 +230,7 @@ const filterOptions = {
     elements.forEach((el) => observer.observe(el))
 
     return () => observer.disconnect()
-  }, [filteredAndSortedProducts]) // <-- add dependency so observer runs after products change
+  }, [products]) // <-- add dependency so observer runs after products change
 
   // Handle filter changes
   const handleFilterChange = (filterType, value) => {
@@ -202,60 +249,66 @@ const filterOptions = {
     })
   }
 
-  // Handle wishlist toggle
-  const toggleWishlist = async (productId) => {
-    const token = localStorage.getItem('access_token');
-    console.log('Token check in toggleWishlist:', !!token, 'Token length:', token?.length);
-    if (!token) {
-      console.log('No token found, redirecting to login');
-      window.location.href = '/login';
-      return;
-    }
+// Replace the existing toggleWishlist function
+const toggleWishlist = async (productId) => {
+  const token = localStorage.getItem('access_token');
+  if (!token) { window.location.href = '/login'; return; }
+  
+  try {
+    const { addToWishlist, removeFromWishlist, getWishlist } = await import('../api/wishlist');
+    const product = products.find(p => p.id === productId);
     
-    try {
-      const { addToWishlist, removeFromWishlist, getWishlist } = await import('../api/wishlist');
-      const product = products.find(p => p.id === productId);
-      
-      if (product?.isWishlisted) {
-        // Find wishlist item ID and remove
-        const wishlist = await getWishlist();
-        const wishlistItem = wishlist.find(item => item.product.id === productId);
-        if (wishlistItem) {
-          await removeFromWishlist(wishlistItem.id);
-        }
-      } else {
-        await addToWishlist(productId);
+    // Logic to add or remove from wishlist
+    if (product?.isWishlisted) {
+      const wishlist = await getWishlist();
+      const wishlistItem = wishlist.find(item => item.product.id === productId);
+      if (wishlistItem) {
+        await removeFromWishlist(wishlistItem.id);
+        showNotification("Removed from wishlist");
       }
-      
-      // Update local state
-      setProducts((prev) =>
-        prev.map((product) => (product.id === productId ? { ...product, isWishlisted: !product.isWishlisted } : product)),
-      );
-    } catch (error) {
-      console.error('Error toggling wishlist:', error);
-      // Don't redirect here, let the API handle it
-    }
-  }
-
-  // Handle add to cart
-  const handleAddToCart = async (productId, options = {}) => {
-    const token = localStorage.getItem('access_token');
-    console.log('Token check in handleAddToCart:', !!token, 'Token length:', token?.length);
-    if (!token) {
-      console.log('No token found, redirecting to login');
-      window.location.href = '/login';
-      return;
+    } else {
+      await addToWishlist(productId);
+      showNotification("Added to wishlist!");
     }
     
-    try {
-      const { addToCart } = await import('../api/cart');
-      await addToCart(productId, options.quantity || 1);
-      console.log(`Added product ${productId} to cart`, options);
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      // Don't redirect here, let the API handle it
-    }
+    // =======================================================
+    // THIS IS THE setProducts CALL YOU MENTIONED.
+    // It's here to update the UI after the API call succeeds.
+    // =======================================================
+    setProducts(prevProducts =>
+      prevProducts.map(p =>
+        p.id === productId ? { ...p, isWishlisted: !p.isWishlisted } : p
+      )
+    );
+
+  } catch (error) {
+    console.error('Error toggling wishlist:', error);
+    showNotification("Error updating wishlist.");
   }
+};
+
+// Replace the existing handleAddToCart function
+const handleAddToCart = async (productId, options = {}) => {
+  const token = localStorage.getItem('access_token');
+  if (!token) { window.location.href = '/login'; return; }
+  
+  try {
+    const { addToCart } = await import('../api/cart');
+    // The API call now returns a response with a message
+    const response = await addToCart(productId, options.quantity || 1);
+    
+    // Check the message from the backend
+    if (response && response.message === "Product is already in your cart") {
+      showNotification("Product is already in your cart");
+    } else {
+      showNotification("Added to cart!");
+    }
+    console.log(`Add to cart attempt for product ${productId}`, options);
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    showNotification("Could not add to cart."); // Generic error
+  }
+};
 
   // Handle quick view
   const handleQuickView = (productId) => {
@@ -292,6 +345,7 @@ const filterOptions = {
     setAppliedFilters({ ...filters })
     setShowFilters(false)
   }
+
 
   // Handle image search
   const handleImageSearch = async (event) => {
@@ -355,10 +409,34 @@ const filterOptions = {
     }
   }
 
+  if (showCheckout) {
+    const item = itemToCheckout;
+    // Simplified calculation functions for a single "Buy Now" item
+    const price = item.isOnSale ? item.finalPrice : item.initialPrice;
+    const subtotal = price * item.quantity;
+    const shipping = subtotal > 100 ? 0 : 9.99;
+    const total = subtotal + shipping;
+
+    return (
+      <CheckoutFlow
+        cartItems={[item]} // Pass the single item in an array
+        calculateTotal={() => total}
+        calculateSubtotal={() => subtotal}
+        calculateDiscount={() => 0} // No discount for Buy Now
+        calculateShipping={() => shipping}
+        appliedPromo={null}
+        onBack={() => {
+          setShowCheckout(false);
+          setItemToCheckout(null);
+        }}
+      />
+    );
+  }
+
   return (
     <>
           <Navbar/>
-
+          <Notification message={notification.message} show={notification.show} />
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 mt-[60px]">
       {/* Floating background elements */}
       <Animation />
@@ -929,7 +1007,7 @@ const filterOptions = {
                         {/* Buy Now Button */}
                         <button
                           className="mt-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 px-4 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 font-medium"
-                          onClick={e => { e.stopPropagation(); /* Add buy now logic here */ }}
+                          onClick={e => { e.stopPropagation(); handleBuyNow({ ...product, quantity: 1 }); }}
                         >
                           Buy Now
                         </button>
@@ -1098,6 +1176,7 @@ const filterOptions = {
         onClose={closeProductDetails}
         onAddToCart={(id, options) => handleAddToCart(id, { ...options, price: selectedProduct?.isOnSale ? selectedProduct?.finalPrice : selectedProduct?.initialPrice })}
         onToggleWishlist={toggleWishlist}
+        onBuyNow={handleBuyNow}
       />
 
       <Footer />

@@ -14,6 +14,7 @@ urlpatterns = [
     path('api/products/', include('products.urls')),  # Updated to include /api/ prefix
     path('tryon/', include("tryon_app.urls")),
     path('api/orders/', include('orders.urls')),
+    path('api/users/', include('users.urls'))
 
 ]
 if settings.DEBUG:

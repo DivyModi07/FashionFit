@@ -42,113 +42,12 @@ const Landing = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const features = [
-    {
-      icon: <Sparkles className="w-8 h-8" />,
-      title: "AI Style Recommender",
-      description: "Get personalized fashion suggestions based on your style preferences and shopping history.",
-      color: "from-purple-500 to-pink-500"
-    },
-    {
-      icon: <Camera className="w-8 h-8" />,
-      title: "Virtual Try-On",
-      description: "See how clothes look on you before buying with our advanced AR virtual try-on technology.",
-      color: "from-pink-500 to-red-500"
-    },
-    {
-      icon: <Ruler className="w-8 h-8" />,
-      title: "Smart Size Guide",
-      description: "Never worry about sizing again with our AI-powered size recommendation system.",
-      color: "from-orange-500 to-yellow-500"
-    },
-    {
-      icon: <Shuffle className="w-8 h-8" />,
-      title: "Mix & Match Generator",
-      description: "Create perfect outfit combinations with our intelligent styling algorithm.",
-      color: "from-blue-500 to-purple-500"
-    }
-  ];
-
-  const products = [
-    {
-      id: 1,
-      name: "Designer Jacket",
-      price: "$299",
-      image: "/api/placeholder/300/300",
-      category: "Outerwear",
-      rating: 4.8
-    },
-    {
-      id: 2,
-      name: "Casual Shirt",
-      price: "$89",
-      image: "/api/placeholder/300/300",
-      category: "Tops",
-      rating: 4.6
-    },
-    {
-      id: 3,
-      name: "Premium Jeans",
-      price: "$159",
-      image: "/api/placeholder/300/300",
-      category: "Bottoms",
-      rating: 4.9
-    },
-    {
-      id: 4,
-      name: "Summer Dress",
-      price: "$199",
-      image: "/api/placeholder/300/300",
-      category: "Dresses",
-      rating: 4.7
-    },
-    {
-      id: 5,
-      name: "Sneakers",
-      price: "$129",
-      image: "/api/placeholder/300/300",
-      category: "Footwear",
-      rating: 4.5
-    },
-    {
-      id: 6,
-      name: "Handbag",
-      price: "$249",
-      image: "/api/placeholder/300/300",
-      category: "Accessories",
-      rating: 4.8
-    }
-  ];
-
-  const steps = [
-    {
-      step: "01",
-      title: "Sign Up",
-      description: "Create your account and join our fashion community"
-    },
-    {
-      step: "02",
-      title: "Style Quiz",
-      description: "Answer a few questions about your style preferences"
-    },
-    {
-      step: "03",
-      title: "Get Outfits",
-      description: "Receive personalized outfit recommendations"
-    },
-    {
-      step: "04",
-      title: "Try & Shop",
-      description: "Virtual try-on and purchase your perfect items"
-    }
-  ];
-
   const testimonials = [
     {
       name: "Sarah Johnson",
       role: "Fashion Enthusiast",
       avatar: "/api/placeholder/60/60",
-      quote: "FashionAI completely transformed my shopping experience. The AI recommendations are spot-on!",
+      quote: "FashionFit completely transformed my shopping experience. The AI recommendations are spot-on!",
       rating: 5
     },
     {
@@ -167,33 +66,8 @@ const Landing = () => {
     }
   ];
 
-  const handleNavClick = (section) => {
-    console.log(`Navigating to ${section}`);
-  };
-
   const handleButtonClick = (action) => {
     console.log(`Button clicked: ${action}`);
-  };
-
-  // Animation variants
-  const fadeInUp = {
-    initial: { opacity: 0, transform: 'translateY(30px)' },
-    animate: { opacity: 1, transform: 'translateY(0px)' }
-  };
-
-  const fadeInLeft = {
-    initial: { opacity: 0, transform: 'translateX(-30px)' },
-    animate: { opacity: 1, transform: 'translateX(0px)' }
-  };
-
-  const fadeInRight = {
-    initial: { opacity: 0, transform: 'translateX(30px)' },
-    animate: { opacity: 1, transform: 'translateX(0px)' }
-  };
-
-  const scaleIn = {
-    initial: { opacity: 0, transform: 'scale(0.8)' },
-    animate: { opacity: 1, transform: 'scale(1)' }
   };
 
   return (
@@ -270,33 +144,21 @@ const Landing = () => {
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
                 <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse-slow">
-                  <span className="text-white font-bold text-lg">F</span>
+                  <span className="text-white font-bold text-lg">FF</span>
                 </div>
                 <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent ml-2">
-                  FashionAI
+                  FashionFit
                 </span>
               </div>
             </div>
             
             {/* Desktop Navigation Links */}
             <div className="hidden md:flex items-center space-x-8">
-              {/* <button 
+              <button 
                 onClick={() => document.getElementById('hero').scrollIntoView({ behavior: 'smooth' })}
                 className="text-gray-700 hover:text-purple-600 transition-colors font-medium"
               >
-                Home
-              </button> */}
-              <button 
-                onClick={() => document.getElementById('features').scrollIntoView({ behavior: 'smooth' })}
-                className="text-gray-700 hover:text-purple-600 transition-colors font-medium"
-              >
                 Features
-              </button>
-              <button 
-                onClick={() => document.getElementById('how-it-works').scrollIntoView({ behavior: 'smooth' })}
-                className="text-gray-700 hover:text-purple-600 transition-colors font-medium"
-              >
-                How It Works
               </button>
               <button 
                 onClick={() => document.getElementById('testimonials').scrollIntoView({ behavior: 'smooth' })}
@@ -345,25 +207,7 @@ const Landing = () => {
                 }}
                 className="text-gray-700 hover:text-purple-600 transition-colors font-medium text-left"
               >
-                Home
-              </button>
-              <button 
-                onClick={() => {
-                  document.getElementById('features').scrollIntoView({ behavior: 'smooth' });
-                  setIsMenuOpen(false);
-                }}
-                className="text-gray-700 hover:text-purple-600 transition-colors font-medium text-left"
-              >
                 Features
-              </button>
-              <button 
-                onClick={() => {
-                  document.getElementById('how-it-works').scrollIntoView({ behavior: 'smooth' });
-                  setIsMenuOpen(false);
-                }}
-                className="text-gray-700 hover:text-purple-600 transition-colors font-medium text-left"
-              >
-                How It Works
               </button>
               <button 
                 onClick={() => {
@@ -412,24 +256,17 @@ const Landing = () => {
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <button 
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/login')}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl animate-pulse-slow"
                 >
                   Explore Now
                 </button>
-                <button 
-                  onClick={() => handleButtonClick('try-virtual-fit')}
-                  className="border-2 border-purple-500 text-purple-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-purple-500 hover:text-white transition-all duration-300 transform hover:scale-105"
-                >
-                  Try Virtual Fit
-                </button>
               </div>
               
-              <div className="mt-12 grid grid-cols-3 gap-8">
+              <div className="mt-12 grid grid-cols-2 gap-8">
                 {[
                   { value: "50K+", label: "Happy Customers", color: "text-purple-600" },
                   { value: "10K+", label: "Fashion Items", color: "text-pink-600" },
-                  { value: "95%", label: "AI Accuracy", color: "text-orange-600" }
                 ].map((stat, index) => (
                   <div key={index} className="text-center" style={{ animationDelay: `${index * 0.2}s` }}>
                     <div className={`text-2xl font-bold ${stat.color} animate-pulse-slow`}>
@@ -463,99 +300,6 @@ const Landing = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Key Features */}
-      <section id="features" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16" data-animate id="features-header">
-            <h2 className={`text-3xl md:text-4xl font-bold text-gray-900 mb-4 transition-all duration-700 ${
-              isVisible['features-header'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-            }`}>
-              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                AI-Powered Features
-              </span>
-            </h2>
-            <p className={`text-xl text-gray-600 max-w-3xl mx-auto transition-all duration-700 delay-200 ${
-              isVisible['features-header'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-            }`}>
-              Discover fashion like never before with our cutting-edge AI technology
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <div 
-                key={index} 
-                className="group"
-                data-animate
-                id={`feature-${index}`}
-              >
-                <div className={`bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 ${
-                  isVisible[`feature-${index}`] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-                }`}
-                style={{ transitionDelay: `${index * 0.1}s` }}>
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.color} flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform duration-300 group-hover:rotate-3`}>
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
-                  <p className="text-gray-600 mb-4">{feature.description}</p>
-                  <button 
-                    onClick={() => handleButtonClick(`try-${feature.title.toLowerCase().replace(/\s+/g, '-')}`)}
-                    className="text-purple-600 hover:text-purple-700 font-medium flex items-center group-hover:translate-x-2 transition-transform duration-300"
-                  >
-                    Try Now <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section id="how-it-works" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16" data-animate id="how-it-works-header">
-            <h2 className={`text-3xl md:text-4xl font-bold text-gray-900 mb-4 transition-all duration-700 ${
-              isVisible['how-it-works-header'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-            }`}>
-              How It Works
-            </h2>
-            <p className={`text-xl text-gray-600 max-w-3xl mx-auto transition-all duration-700 delay-200 ${
-              isVisible['how-it-works-header'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-            }`}>
-              Get started with FashionAI in four simple steps
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {steps.map((step, index) => (
-              <div 
-                key={index} 
-                className="text-center"
-                data-animate
-                id={`step-${index}`}
-              >
-                <div className={`transition-all duration-1000 ${
-                  isVisible[`step-${index}`] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-                }`}
-                style={{ transitionDelay: `${index * 0.3}s` }}>
-                  <div className="relative mb-8">
-                    <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-transform duration-1200 hover:rotate-12">
-                      <span className="text-white font-bold text-lg">{step.step}</span>
-                    </div>
-                    {index < steps.length - 1 && (
-                      <div className="hidden lg:block absolute top-8 left-1/2 w-full h-0.5 bg-gradient-to-r from-purple-200 to-pink-200 transform translate-x-8 animate-pulse-slow"></div>
-                    )}
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">{step.title}</h3>
-                  <p className="text-gray-600">{step.description}</p>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -652,9 +396,9 @@ const Landing = () => {
             <div>
               <div className="flex items-center mb-4">
                 <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse-slow">
-                  <span className="text-white font-bold text-lg">F</span>
+                  <span className="text-white font-bold text-lg">FF</span>
                 </div>
-                <span className="ml-2 text-xl font-bold">FashionAI</span>
+                <span className="ml-2 text-xl font-bold">FashionFit</span>
               </div>
               <p className="text-gray-400 mb-4">
                 AI-powered fashion discovery platform that helps you find your perfect style.
@@ -686,7 +430,6 @@ const Landing = () => {
               <h3 className="text-lg font-semibold mb-4">Support</h3>
               <ul className="space-y-2">
                 <li><button onClick={() => handleButtonClick('help-center')} className="text-gray-400 hover:text-white transition-colors hover:translate-x-2 transform duration-300">Help Center</button></li>
-                <li><button onClick={() => handleButtonClick('size-guide')} className="text-gray-400 hover:text-white transition-colors hover:translate-x-2 transform duration-300">Size Guide</button></li>
                 <li><button onClick={() => handleButtonClick('returns')} className="text-gray-400 hover:text-white transition-colors hover:translate-x-2 transform duration-300">Returns</button></li>
                 <li><button onClick={() => handleButtonClick('shipping')} className="text-gray-400 hover:text-white transition-colors hover:translate-x-2 transform duration-300">Shipping Info</button></li>
               </ul>
@@ -697,15 +440,15 @@ const Landing = () => {
               <div className="space-y-2">
                 <div className="flex items-center text-gray-400 hover:text-white transition-colors transform hover:translate-x-2 duration-300">
                   <Mail className="w-4 h-4 mr-2" />
-                  <span>hello@fashionai.com</span>
+                  <span>hello@fashionfit.com</span>
                 </div>
                 <div className="flex items-center text-gray-400 hover:text-white transition-colors transform hover:translate-x-2 duration-300">
                   <Phone className="w-4 h-4 mr-2" />
-                  <span>+1 (555) 123-4567</span>
+                  <span>+91 9999999999</span>
                 </div>
                 <div className="flex items-center text-gray-400 hover:text-white transition-colors transform hover:translate-x-2 duration-300">
                   <MapPin className="w-4 h-4 mr-2" />
-                  <span>San Francisco, CA</span>
+                  <span>Ahmedabad, Gujarat</span>
                 </div>
               </div>
             </div>
@@ -713,7 +456,7 @@ const Landing = () => {
           
           <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              © 2025 FashionAI. All rights reserved.
+              © 2025 FashionFit. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <button onClick={() => handleButtonClick('privacy')} className="text-gray-400 hover:text-white text-sm transition-colors transform hover:scale-105 duration-300">
