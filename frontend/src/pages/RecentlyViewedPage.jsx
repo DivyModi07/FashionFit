@@ -140,9 +140,7 @@ const RecentlyViewedPage = () => {
     <>
       <span className="text-lg font-bold text-red-600">${product.price.toFixed(2)}</span>
       <span className="text-sm text-gray-500 line-through">${product.originalPrice.toFixed(2)}</span>
-      <span className="text-sm font-semibold text-green-600">
-        Save {product.discount}% today
-      </span>
+ 
     </>
   ) : (
     <span className="text-lg font-bold text-gray-900">${product.originalPrice.toFixed(2)}</span>

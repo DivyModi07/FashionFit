@@ -45,11 +45,41 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         user.save(update_fields=["last_login"])
         return data
 
+# class UserProfileSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = CustomUser
+#         # I've included all the fields your checkout page will need
+#         fields = [
+#             'id', 'email', 'first_name', 'last_name', 'phone',
+#             'address', 'city', 'state', 'zipcode'
+#         ]
+
+
+# In users/serializers.py
+
 class UserProfileSerializer(serializers.ModelSerializer):
+    # Add a password field that is write-only and not required
+    password = serializers.CharField(write_only=True, required=False, style={'input_type': 'password'})
+
     class Meta:
         model = CustomUser
-        # I've included all the fields your checkout page will need
         fields = [
             'id', 'email', 'first_name', 'last_name', 'phone',
-            'address', 'city', 'state', 'zipcode'
+            'address', 'city', 'state', 'zipcode', 'password'
         ]
+        # Make email read-only so it can't be changed from this form
+        read_only_fields = ['email', 'id']
+
+    def update(self, instance, validated_data):
+        # Handle the optional password update
+        password = validated_data.pop('password', None)
+        
+        # Update all other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        if password:
+            instance.set_password(password)
+            
+        instance.save()
+        return instance

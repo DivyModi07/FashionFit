@@ -476,9 +476,7 @@ const calculateShipping = () => {
     <>
       <span className="text-lg font-bold text-red-600">${item.price.toFixed(2)}</span>
       <span className="text-sm text-gray-500 line-through">${item.originalPrice.toFixed(2)}</span>
-      <span className="text-sm font-semibold text-green-600">
-        Save {item.discount}% today
-      </span>
+
     </>
   ) : (
     <span className="text-lg font-bold text-gray-900">${item.originalPrice.toFixed(2)}</span>

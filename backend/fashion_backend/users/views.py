@@ -158,5 +158,14 @@ class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
+        """Handles fetching the user's profile."""
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data)
+
+    def put(self, request, *args, **kwargs):
+        """Handles updating the user's profile."""
+        serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

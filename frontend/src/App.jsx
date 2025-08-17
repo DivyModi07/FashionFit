@@ -13,7 +13,7 @@ import WishlistPage from './pages/WishlistPage';
 import { CartWishlistProvider } from './context/CartWishlistContext';
 import TrendingPage from './pages/TrendingPage';
 import RecentlyViewedPage from './pages/RecentlyViewedPage';
-
+import AccountSettings from './pages/AccountSettings';
 const App = () => {
   return (
     <CartWishlistProvider>
@@ -64,6 +64,7 @@ const App = () => {
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/trending-products" element={<TrendingPage />} />
         <Route path="/recently-viewed" element={<RecentlyViewedPage />} />
+        <Route path="/account-settings" element={<AccountSettings />} />
       </Routes>
     </CartWishlistProvider>
   );

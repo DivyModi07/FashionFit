@@ -170,12 +170,24 @@ const Homepage = () => {
           <span className="text-sm text-gray-500 ml-2">({product.rating})</span>
         </div>
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="text-lg font-bold text-gray-900">${product.price}</span>
-            {product.originalPrice > product.price && (
-              <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
-            )}
-          </div>
+        <div className="flex items-center space-x-2">
+  {Number(product.originalPrice) > Number(product.price) ? (
+    <>
+      {/* Discounted */}
+      <span className="text-lg font-bold text-red-600">
+        ${Number(product.price).toFixed(2)}
+      </span>
+      <span className="text-sm text-gray-500 line-through">
+        ${Number(product.originalPrice).toFixed(2)}
+      </span>
+    </>
+  ) : (
+    /* Not discounted */
+    <span className="text-lg font-bold text-gray-600">
+      ${Number(product.price ?? product.originalPrice).toFixed(2)}
+    </span>
+  )}
+</div>
           <button
             onClick={() => handleButtonClick('add-to-cart', product.id)}
             className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-2 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105"

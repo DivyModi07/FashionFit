@@ -150,8 +150,8 @@ const filteredAndSortedProducts = products
           name: item.short_description || "Unnamed Product",
           brand: item.brand_name || "No Brand",
           price: Number(item.final_price) || 0,
-          finalPrice: Number(item.final_price) || 0,
-          initialPrice: Number(item.initial_price) || 0,
+          // finalPrice: Number(item.final_price) || 0,
+          // initialPrice: Number(item.initial_price) || 0,
           originalPrice: Number(item.initial_price) || 0,
           image: item.model_image || item.cutout_image || "/placeholder.svg",
           modelImage: item.model_image,
@@ -271,10 +271,7 @@ const toggleWishlist = async (productId) => {
       showNotification("Added to wishlist!");
     }
     
-    // =======================================================
-    // THIS IS THE setProducts CALL YOU MENTIONED.
-    // It's here to update the UI after the API call succeeds.
-    // =======================================================
+  
     setProducts(prevProducts =>
       prevProducts.map(p =>
         p.id === productId ? { ...p, isWishlisted: !p.isWishlisted } : p

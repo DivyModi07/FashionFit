@@ -150,12 +150,13 @@ const TrendingPage = () => {
     <>
       <span className="text-lg font-bold text-red-600">${product.price.toFixed(2)}</span>
       <span className="text-sm text-gray-500 line-through">${product.originalPrice.toFixed(2)}</span>
-      <span className="text-sm font-semibold text-green-600">
-        Save {product.discount}% today
-      </span>
+
     </>
   ) : (
-    <span className="text-lg font-bold text-gray-900">${product.originalPrice.toFixed(2)}</span>
+    <>
+         <span className="text-lg font-bold text-red-600">${product.price.toFixed(2)}</span>
+         <span className="text-sm text-gray-500 line-through">${product.originalPrice.toFixed(2)}</span>
+    </>
   )}
 </div>
                       <button onClick={() => handleAddToCart(product.id)} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-2 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105">
