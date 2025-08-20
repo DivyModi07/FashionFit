@@ -388,7 +388,7 @@ const handleWishlistToggle = (e) => {
                 </p>
                 {/* Price Section */}
                 <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 mb-8">
-                  <div className="flex items-center gap-4 mb-2">
+                  {/* <div className="flex items-center gap-4 mb-2">
                     {displayProduct?.isOnSale ? (
                       <>
                         <span className="text-4xl font-bold text-red-600">${displayProduct.finalPrice}</span>
@@ -397,11 +397,21 @@ const handleWishlistToggle = (e) => {
                     ) : (
                       <span className="text-4xl font-bold text-gray-900">${displayProduct.initialPrice}</span>
                     )}
-                  </div>
+                  </div> */}
+                  <div className="flex items-center space-x-2">
+  {product.final_price && Number(product.final_price) < Number(product.initial_price) ? (
+    <>
+      <span className="text-lg font-bold text-red-600">₹{Number(product.final_price).toFixed(2)}</span>
+      <span className="text-sm text-gray-500 line-through">₹{Number(product.initial_price).toFixed(2)}</span>
+    </>
+  ) : (
+    <span className="text-lg font-bold text-gray-900">₹{Number(product.initial_price || product.final_price).toFixed(2)}</span>
+  )}
+</div>
                   {displayProduct?.isOnSale && displayProduct?.discount > 0 && (
                     <div className="flex items-center gap-3">
                       <span className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-full text-sm font-bold">
-                        Save ${(displayProduct.initialPrice - displayProduct.finalPrice).toFixed(2)}
+                        Save ₹{Number(product.initial_price - product.final_price).toFixed(2)}
                       </span>
                       <span className="text-green-600 font-bold">{displayProduct.discount}% off today!</span>
                     </div>

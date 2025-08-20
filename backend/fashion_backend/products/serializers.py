@@ -33,22 +33,17 @@ class ImageSearchSerializer(serializers.Serializer):
 
 
 class CartSerializer(serializers.ModelSerializer):
-    # This sends the full product details TO the frontend (for reading)
     product = ProductSerializer(read_only=True)
-    # This accepts a simple product ID FROM the frontend (for writing/creating)
     product_id = serializers.PrimaryKeyRelatedField(
         queryset=Product.objects.all(), source='product', write_only=True
     )
 
     class Meta:
         model = Cart
-        # We include 'user' for reading, and both product fields for read/write
         fields = ['id', 'user', 'product', 'product_id', 'quantity', 'added_at']
-        # User should be read-only as it's set automatically from the request
         read_only_fields = ['user']
 
 
-# --- REPLACE your WishlistSerializer with this corrected version ---
 class WishlistSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
     product_id = serializers.PrimaryKeyRelatedField(

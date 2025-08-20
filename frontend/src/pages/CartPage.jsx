@@ -38,11 +38,15 @@ const CartPage = () => {
   const [showProductDetails, setShowProductDetails] = useState(false) // New state for product details modal
   const [selectedProductForDetails, setSelectedProductForDetails] = useState(null) // New state for product details modal
 
-  const promoCodes = {
-    SAVE20: { discount: 20, type: "percentage", description: "20% off your order" },
-    WELCOME10: { discount: 10, type: "fixed", description: "$10 off your first order" },
-    FREESHIP: { discount: 0, type: "shipping", description: "Free shipping" },
-  }
+  const handleAddToWishlist = async (productId) => {
+    try {
+      await addToWishlist(productId);
+      showNotification("Item added to wishlist!", "success");
+    } catch (error) {
+      console.error("Error adding to wishlist:", error);
+      showNotification("Failed to add item to wishlist", "error");
+    }
+  };
 
   // Fetch cart data on component mount
   useEffect(() => {
@@ -117,31 +121,24 @@ const CartPage = () => {
 
   const toggleFavorite = async (productId) => {
     try {
-      const cartItem = cartItems.find(item => item.id === productId);
-      if (!cartItem) return;
-      
-      const actualProductId = cartItem.productId; // Use the actual product ID
       const isInWishlist = favorites.has(productId);
+  
       if (isInWishlist) {
-        // Find the wishlist item ID and remove it
-        // For now, we'll just update the local state
-        setFavorites((prev) => {
-          const newFavorites = new Set(prev)
-          newFavorites.delete(productId)
-          return newFavorites
-        })
+        await removeFromWishlist(productId); 
+        setFavorites(prev => {
+          const newFavorites = new Set(prev);
+          newFavorites.delete(productId);
+          return newFavorites;
+        });
       } else {
-        await addToWishlist(actualProductId);
-        setFavorites((prev) => {
-          const newFavorites = new Set(prev)
-          newFavorites.add(productId)
-          return newFavorites
-        })
+        await addToWishlist(productId);
+        setFavorites(prev => new Set(prev).add(productId));
       }
     } catch (error) {
-      console.error('Error toggling wishlist:', error);
+      console.error("Error toggling wishlist:", error);
     }
-  }
+  };
+  
 
   const applyPromoCode = () => {
     if (promoCodes[promoCode.toUpperCase()]) {
@@ -273,8 +270,7 @@ const calculateShipping = () => {
         updatedItems[existingItemIndex] = {
           ...updatedItems[existingItemIndex],
           quantity: quantity, // Update with the quantity from the modal
-          size: size, // Update size if changed in modal
-          color: color, // Update color if changed in modal
+
         }
         return updatedItems
       } else {
@@ -438,14 +434,15 @@ const calculateShipping = () => {
                               <div className="flex gap-2">
                                 {" "}
                                 {/* Group wishlist and eye buttons */}
-                                <button
-                                  onClick={() => toggleFavorite(item.id)}
+                                {/* <button
+                                  onClick={() => toggleFavorite(item.productId)}
                                   className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-300"
                                 >
                                   <Heart
+                                  onClick={() => handleAddToWishlist(item.productId)}
                                     className={`w-5 h-5 ${favorites.has(item.id) ? "text-red-500 fill-current" : "text-gray-400"}`}
                                   />
-                                </button>
+                                </button> */}
                                 <button
                                   onClick={() => handleViewDetails(item)}
                                   className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-300"
@@ -461,12 +458,12 @@ const calculateShipping = () => {
   </div>
 
                             <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-                              <span>
+                              {/* <span>
                                 Size: <strong>{item.size}</strong>
-                              </span>
-                              <span>
+                              </span> */}
+                              {/* <span>
                                 Color: <strong>{item.color}</strong>
-                              </span>
+                              </span> */}
                             </div>
 
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -474,12 +471,12 @@ const calculateShipping = () => {
                               <div className="flex items-center space-x-2">
   {item.isOnSale && item.discount > 0 ? (
     <>
-      <span className="text-lg font-bold text-red-600">${item.price.toFixed(2)}</span>
-      <span className="text-sm text-gray-500 line-through">${item.originalPrice.toFixed(2)}</span>
+      <span className="text-lg font-bold text-red-600">₹{item.price.toFixed(2)}</span>
+      <span className="text-sm text-gray-500 line-through">₹{item.originalPrice.toFixed(2)}</span>
 
     </>
   ) : (
-    <span className="text-lg font-bold text-gray-900">${item.originalPrice.toFixed(2)}</span>
+    <span className="text-lg font-bold text-gray-900">₹{item.originalPrice.toFixed(2)}</span>
   )}
 </div>
 

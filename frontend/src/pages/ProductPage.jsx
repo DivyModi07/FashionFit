@@ -140,37 +140,80 @@ const filteredAndSortedProducts = products
     }
   });
 
-  useEffect(() => {
+//   useEffect(() => {
+//     axios.get('http://127.0.0.1:8000/api/products/all/')
+//       .then(res => {
+        
+//         const mapped = res.data.map(item => ({
+//           ...item, // Keep all original data from the backend
+//           id: item.id,
+//           name: item.short_description || "Unnamed Product",
+//           brand: item.brand_name || "No Brand",
+//           // price: Number(item.final_price) || 0,
+//           finalPrice: Number(item.final_price) || 0,
+//           initialPrice: Number(item.initial_price) || 0,
+//           // originalPrice: Number(item.initial_price) || 0,
+//           image: item.model_image || item.cutout_image || "/placeholder.svg",
+//           modelImage: item.model_image,
+//           cutoutImage: item.cutout_image,
+//           description: item.short_description || "",
+//           inStock: (item.stock_total || 0) > 0, // Fixes the stock issue
+//           isOnSale: item.is_on_sale,
+//           discount: item.is_on_sale ? parseInt(item.discount_label?.replace('% Off', '') || "0", 10) : 0,
+          
+//           // --- Using Dummy Data As Requested ---
+//           rating: 4.5, 
+//           reviews: [], // Using the mockReviews from ProductDetails.jsx for now
+//         }));
+        
+//         setProducts(mapped);
+//       })
+//       .catch(err => console.error("❌ Failed to fetch products:", err));
+// }, []);
+
+
+//... inside ProductPage.jsx
+
+useEffect(() => {
     axios.get('http://127.0.0.1:8000/api/products/all/')
       .then(res => {
         // This manual mapping creates a stable "frontend" product object
-        const mapped = res.data.map(item => ({
-          ...item, // Keep all original data from the backend
-          id: item.id,
-          name: item.short_description || "Unnamed Product",
-          brand: item.brand_name || "No Brand",
-          price: Number(item.final_price) || 0,
-          // finalPrice: Number(item.final_price) || 0,
-          // initialPrice: Number(item.initial_price) || 0,
-          originalPrice: Number(item.initial_price) || 0,
-          image: item.model_image || item.cutout_image || "/placeholder.svg",
-          modelImage: item.model_image,
-          cutoutImage: item.cutout_image,
-          description: item.short_description || "",
-          inStock: (item.stock_total || 0) > 0, // Fixes the stock issue
-          isOnSale: item.is_on_sale,
-          discount: item.is_on_sale ? parseInt(item.discount_label?.replace('% Off', '') || "0", 10) : 0,
+        const mapped = res.data.map(item => {
+          // --- FIX: Added logic to extract the product type ---
+          let type = '';
+          if (item.short_description) {
+            const words = item.short_description.trim().split(' ');
+            type = words.length > 0 ? words[words.length - 1].toLowerCase() : '';
+          }
           
-          // --- Using Dummy Data As Requested ---
-          rating: 4.5, 
-          reviews: [], // Using the mockReviews from ProductDetails.jsx for now
-        }));
+          return {
+            ...item, // Keep all original data from the backend
+            id: item.id,
+            name: item.short_description || "Unnamed Product",
+            brand: item.brand_name || "No Brand",
+            finalprice: Number(item.final_price) || 0,
+            initialPrice: Number(item.initial_price) || 0,
+            image: item.model_image || item.cutout_image || "/placeholder.svg",
+            modelImage: item.model_image,
+            cutoutImage: item.cutout_image,
+            description: item.short_description || "",
+            inStock: (item.stock_total || 0) > 0,
+            isOnSale: item.is_on_sale,
+            discount: item.is_on_sale ? parseInt(item.discount_label?.replace('% Off', '') || "0", 10) : 0,
+            type, // Add the extracted type to the product object
+            
+            // --- Using Dummy Data As Requested ---
+            rating: 4.5, 
+            reviews: [],
+          };
+        });
         
         setProducts(mapped);
       })
       .catch(err => console.error("❌ Failed to fetch products:", err));
 }, []);
 
+//...
   
   // Filter options
 // Filter options - Updated to match API data
@@ -230,7 +273,7 @@ const filterOptions = {
     elements.forEach((el) => observer.observe(el))
 
     return () => observer.disconnect()
-  }, [products]) // <-- add dependency so observer runs after products change
+  }, [filteredAndSortedProducts.length, currentPage]) 
 
   // Handle filter changes
   const handleFilterChange = (filterType, value) => {
@@ -369,34 +412,45 @@ const handleAddToCart = async (productId, options = {}) => {
               const words = item.short_description.trim().split(' ');
               type = words.length > 0 ? words[words.length - 1].toLowerCase() : '';
             }
+        
+            // Safe number parser (removes ₹, commas, spaces, etc.)
+            const safeNumber = (val) => {
+              if (!val) return 0;
+              return parseFloat(String(val).replace(/[^0-9.]/g, "")) || 0;
+            };
+        
             return {
               id: item.id || index,
               name: item.short_description || "No name",
-              brand: item.brand_name,
-              finalPrice: Number(item.final_price) || 0,
-              initialPrice: Number(item.initial_price) || 0,
+              brand: item.brand_name || "Unknown Brand",
+              price: safeNumber(item.final_price || item.price),          // ✅ fixed
+              originalPrice: safeNumber(item.initial_price || item.originalPrice), // ✅ fixed
               isOnSale: !!item.is_on_sale,
-              discount: item.is_on_sale ? parseInt(item.discount_label?.replace('% Off', '') || "0", 10) : 0,
+              discount: item.is_on_sale 
+                ? parseInt(item.discount_label?.replace('% Off', '') || "0", 10) 
+                : 0,
               merchandiseLabel: item.merchandise_label || "",
-              rating: 4.5, // Default rating since API doesn't provide
-              reviews: Math.floor(Math.random() * 50) + 10, // Random reviews count
-              reviewList: [], // Empty array since API doesn't provide
-              image: item.model_image || "/placeholder.png",
+              rating: 4.5,
+              reviews: Math.floor(Math.random() * 50) + 10,
+              reviewList: [],
+              image: item.model_image || item.cutout_image || "/placeholder.png",
               modelImage: item.model_image,
               cutoutImage: item.cutout_image,
               description: item.short_description || "",
-              type, // new type field
-              currency: item.currency || "USD",
+              type,
+              currency: "₹",   // Force INR
               isWishlisted: false,
-              stock: Number(item.stock_total) || 0,
+              stock: safeNumber(item.stock_total), // ✅ fixed stock parser
               isCustomizable: !!item.is_customizable,
               brand_id: item.brand_id,
               merchant_id: item.merchant_id,
               product_id: item.product_id,
             };
           });
-          setProducts(mapped)
+        
+          setProducts(mapped);
         }
+        
       } catch (error) {
         console.error('Image search error:', error)
         // Keep existing products if search fails
@@ -408,7 +462,7 @@ const handleAddToCart = async (productId, options = {}) => {
 
   if (showCheckout) {
     const item = itemToCheckout;
-    // Simplified calculation functions for a single "Buy Now" item
+    
     const price = item.isOnSale ? item.finalPrice : item.initialPrice;
     const subtotal = price * item.quantity;
     const shipping = subtotal > 100 ? 0 : 9.99;
@@ -416,7 +470,7 @@ const handleAddToCart = async (productId, options = {}) => {
 
     return (
       <CheckoutFlow
-        cartItems={[item]} // Pass the single item in an array
+        cartItems={[item]} 
         calculateTotal={() => total}
         calculateSubtotal={() => subtotal}
         calculateDiscount={() => 0} // No discount for Buy Now
@@ -775,7 +829,7 @@ const handleAddToCart = async (productId, options = {}) => {
                     </div>
 
                     {/* View Mode Toggle */}
-                    <div className="flex bg-gray-100 rounded-full p-1">
+                    {/* <div className="flex bg-gray-100 rounded-full p-1">
                       <button
                         onClick={() => setViewMode("grid")}
                         className={`p-2 rounded-full transition-all duration-300 ${
@@ -796,7 +850,7 @@ const handleAddToCart = async (productId, options = {}) => {
                       >
                         <List className="w-4 h-4" />
                       </button>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -909,7 +963,7 @@ const handleAddToCart = async (productId, options = {}) => {
             {/* Products Grid/List */}
             <div
               className={`${
-                viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"
+                 "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" 
               }`}
             >
               {filteredAndSortedProducts.map((product, index) => (
@@ -990,16 +1044,17 @@ const handleAddToCart = async (productId, options = {}) => {
                         <p className="text-sm text-gray-600 mb-3">{product.description}</p>
                         {/* Price below description */}
                         <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            {product.isOnSale ? (
-                              <>
-                                <span className="text-lg font-bold text-red-600">${product.finalPrice}</span>
-                                <span className="text-sm text-gray-500 line-through">${product.initialPrice}</span>
-                              </>
-                            ) : (
-                              <span className="text-lg font-bold text-gray-900">${product.initialPrice}</span>
-                            )}
-                          </div>
+                        <div className="flex items-center space-x-2">
+  {product.final_price && Number(product.final_price) < Number(product.initial_price) ? (
+    <>
+      <span className="text-lg font-bold text-red-600">₹{Number(product.final_price).toFixed(2)}</span>
+      <span className="text-sm text-gray-500 line-through">₹{Number(product.initial_price).toFixed(2)}</span>
+    </>
+  ) : (
+    <span className="text-lg font-bold text-gray-900">₹{Number(product.initial_price || product.final_price).toFixed(2)}</span>
+  )}
+</div>
+
                         </div>
                         {/* Buy Now Button */}
                         <button

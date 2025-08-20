@@ -126,9 +126,9 @@ const RecentlyViewedPage = () => {
             <button onClick={() => handleToggleWishlist(product.id)} className="w-8 h-8 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-300 shadow-md">
                 <Heart className={`w-4 h-4 ${favorites.has(product.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`} />
             </button>
-            <button onClick={() => handleViewDetails(product)} className="w-8 h-8 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-300 shadow-md">
+            {/* <button onClick={() => handleViewDetails(product)} className="w-8 h-8 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-300 shadow-md">
                 <Eye className="w-4 h-4 text-purple-600" />
-            </button>
+            </button> */}
         </div>
       </div>
       <div className="p-4">
@@ -138,12 +138,12 @@ const RecentlyViewedPage = () => {
         <div className="flex items-center space-x-2">
   {product.isOnSale && product.discount > 0 ? (
     <>
-      <span className="text-lg font-bold text-red-600">${product.price.toFixed(2)}</span>
-      <span className="text-sm text-gray-500 line-through">${product.originalPrice.toFixed(2)}</span>
+      <span className="text-lg font-bold text-red-600">₹{product.price.toFixed(2)}</span>
+      <span className="text-sm text-gray-500 line-through">₹{product.originalPrice.toFixed(2)}</span>
  
     </>
   ) : (
-    <span className="text-lg font-bold text-gray-900">${product.originalPrice.toFixed(2)}</span>
+    <span className="text-lg font-bold text-gray-900">₹{product.originalPrice.toFixed(2)}</span>
   )}
 </div>
           <button onClick={() => handleAddToCart(product.id)} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-2 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105">

@@ -52,6 +52,9 @@ const Homepage = () => {
     }
   ];
 
+    // UPDATED: Helper function to safely parse prices from the API
+
+
   // This data is static for now. A full implementation would use localStorage to track visited items.
   const recentlyViewed = [
     { id: 1, name: "Elegant Summer Dress", price: 89.99, originalPrice: 129.99, image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", rating: 4.5 },
@@ -60,9 +63,37 @@ const Homepage = () => {
     { id: 4, name: "Designer Handbag", price: 199.99, originalPrice: 249.99, image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", rating: 4.6 }
   ];
 
-  useEffect(() => {
-    setRecentlyViewedItems(getRecentlyViewed());
-  }, []);
+// Helper: parse price safely from string or number
+const parsePrice = (val) => {
+  if (typeof val === "number") return val;
+  if (typeof val === "string") {
+    return parseFloat(val.replace(/[^0-9.]/g, "")) || 0;
+  }
+  return 0;
+};
+
+useEffect(() => {
+  const items = getRecentlyViewed();
+  const mappedItems = items.map(p => ({
+    ...p,
+    id: p.id,
+    name: p.short_description || p.name || "Unnamed Product",
+    brand: p.brand_name || p.brand || "No Brand",
+    description: p.short_description || p.description || "",
+    price: Number(p.final_price || p.price) || 0,
+    originalPrice: Number(p.initial_price || p.originalPrice || p.price) || 0,
+    image: p.model_image || p.cutout_image || p.image || "/placeholder.svg",
+    rating: p.rating || 4.5,
+    discount: p.is_on_sale
+      ? parseInt(p.discount_label?.replace('% Off', '') || "0", 10)
+      : (p.discount || 0),
+  }));
+  setRecentlyViewedItems(mappedItems);
+}, []);
+
+
+      
+
 
   const trendingItems = products.filter(p => p.discount > 0).slice(0, 4); 
 
@@ -116,21 +147,19 @@ const Homepage = () => {
     return () => observer.disconnect();
   }, []);
 
-  const handleButtonClick = (action, id = null) => {
-    console.log(`Button clicked: ${action}`, id ? `ID: ${id}` : '');
+  const handleButtonClick = (action, id) => {
+    if (action === "add-to-cart") {
+      axios.post(`http://127.0.0.1:8000/api/products/cart/add/`, { product_id: id })
+        .then(() => alert("Added to cart ✅"))
+        .catch(() => alert("Login required! ❌"));
+    }
+    if (action === "add-to-wishlist") {
+      axios.post(`http://127.0.0.1:8000/api/products/wishlist/add/`, { product_id: id })
+        .then(() => alert("Added to wishlist ❤️"))
+        .catch(() => alert("Login required! ❌"));
+    }
   };
-
-  const toggleFavorite = (id) => {
-    setFavorites(prev => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(id)) {
-        newFavorites.delete(id);
-      } else {
-        newFavorites.add(id);
-      }
-      return newFavorites;
-    });
-  };
+  
 
   const renderStars = (rating) => {
     return [...Array(5)].map((_, i) => (
@@ -154,14 +183,6 @@ const Homepage = () => {
             -{product.discount}%
           </div>
         )}
-        <button
-          onClick={() => toggleFavorite(product.id)}
-          className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:scale-110"
-        >
-          <Heart 
-            className={`w-4 h-4 ${favorites.has(product.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`}
-          />
-        </button>
       </div>
       <div className="p-4">
         <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{product.name}</h3>
@@ -169,31 +190,23 @@ const Homepage = () => {
           {renderStars(product.rating)}
           <span className="text-sm text-gray-500 ml-2">({product.rating})</span>
         </div>
-        <div className="flex items-center justify-between">
+  
+        {/* ✅ Price section */}
         <div className="flex items-center space-x-2">
-  {Number(product.originalPrice) > Number(product.price) ? (
-    <>
-      {/* Discounted */}
-      <span className="text-lg font-bold text-red-600">
-        ${Number(product.price).toFixed(2)}
-      </span>
-      <span className="text-sm text-gray-500 line-through">
-        ${Number(product.originalPrice).toFixed(2)}
-      </span>
-    </>
-  ) : (
-    /* Not discounted */
-    <span className="text-lg font-bold text-gray-600">
-      ${Number(product.price ?? product.originalPrice).toFixed(2)}
-    </span>
-  )}
-</div>
-          <button
-            onClick={() => handleButtonClick('add-to-cart', product.id)}
-            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-2 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105"
-          >
-            <ShoppingCart className="w-4 h-4" />
-          </button>
+          {Number(product.originalPrice) > Number(product.price) ? (
+            <>
+              <span className="text-lg font-bold text-red-600">
+                ₹{Number(product.price).toFixed(2)}
+              </span>
+              <span className="text-sm text-gray-500 line-through">
+                ₹{Number(product.originalPrice).toFixed(2)}
+              </span>
+            </>
+          ) : (
+            <span className="text-lg font-bold text-gray-600">
+              ₹{Number(product.price ?? product.originalPrice).toFixed(2)}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -329,7 +342,7 @@ const Homepage = () => {
               </button>
           </div>
           
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
             {trendingItems.map((product, index) => (
               <div 
                 key={product.id}
@@ -352,3 +365,8 @@ const Homepage = () => {
 };
 
 export default Homepage;
+
+
+
+
+

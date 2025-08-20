@@ -42,3 +42,36 @@ export const placeOrder = async (addressDetails) => {
     throw error;
   }
 };
+
+
+export const buyNow = async (productId, quantity, addressDetails) => {
+  try {
+      const token = localStorage.getItem('accessToken'); 
+      if (!token) {
+          window.location.href = '/login';
+          return null;
+      }
+
+      const payload = {
+          product_id: productId,
+          quantity: quantity,
+          shipping_address: addressDetails.shipping_address,
+          billing_address: addressDetails.billing_address,
+      };
+
+      const response = await axios.post(`${API_BASE_URL}/orders/buy-now/`, payload, {
+          headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      return response.data;
+  } catch (error) {
+      console.error('Error in Buy Now:', error.response?.data || error.message);
+      if (error.response?.data?.error) {
+          throw new Error(error.response.data.error);
+      }
+      if (error.response?.status === 401) {
+          window.location.href = '/login';
+      }
+      throw error;
+  }
+};

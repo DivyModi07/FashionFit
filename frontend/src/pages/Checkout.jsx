@@ -105,7 +105,7 @@ const Checkout = ({
       type: "card",
       name: "Credit/Debit Card",
       icon: CreditCard,
-      description: "Visa, Mastercard, American Express",
+      description: "Visa,Rupay",
     },
     {
       id: 2,
@@ -114,13 +114,13 @@ const Checkout = ({
       icon: Smartphone,
       description: "Pay using UPI ID or QR code",
     },
-    {
-      id: 3,
-      type: "wallet",
-      name: "Digital Wallet",
-      icon: Wallet,
-      description: "PayPal, Apple Pay, Google Pay",
-    },
+    // {
+    //   id: 3,
+    //   type: "wallet",
+    //   name: "Digital Wallet",
+    //   icon: Wallet,
+    //   description: "PayPal, Apple Pay, Google Pay",
+    // },
     {
       id: 4,
       type: "cashondelivery",
@@ -600,7 +600,7 @@ const Checkout = ({
                   </div>
                 )}
 
-                {selectedPayment?.type === "wallet" && (
+                {/* {selectedPayment?.type === "wallet" && (
                   <div className="mb-6 p-6 bg-gray-50 rounded-xl text-center text-gray-700">
                     <h3 className="text-lg font-semibold mb-2">Digital Wallet</h3>
                     <p>You will be redirected to your chosen digital wallet to complete the payment.</p>
@@ -608,7 +608,7 @@ const Checkout = ({
                       Connect Wallet
                     </button>
                   </div>
-                )}
+                )} */}
 
                 {selectedPayment?.type === "netbanking" && (
                   <div className="mb-6 p-6 bg-gray-50 rounded-xl text-center text-gray-700">
@@ -656,8 +656,8 @@ const Checkout = ({
                         <div className="flex-1">
                           <h3 className="font-semibold text-gray-900">{item.name}</h3>
                           <div className="flex items-center gap-4 text-sm text-gray-600">
-                            <span>Size: {item.size}</span>
-                            <span>Color: {item.color}</span>
+                            {/* <span>Size: {item.size}</span>
+                            <span>Color: {item.color}</span> */}
                             <span>Qty: {item.quantity}</span>
                           </div>
                           <div className="flex items-center mt-1">

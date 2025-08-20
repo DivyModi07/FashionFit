@@ -35,8 +35,9 @@ const WishlistPage = () => {
   const [isVisible, setIsVisible] = useState({})
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [isProductDetailOpen, setIsProductDetailOpen] = useState(false)
-
+  const [itemToCheckout, setItemToCheckout] = useState(null)
   const [wishlistItems, setWishlistItems] = useState([])
+  const [showCheckout, setShowCheckout] = useState(false)
 
   // Get unique categories for filter
   const categories = ["all", ...new Set(wishlistItems.map((item) => item.category))]
@@ -50,7 +51,8 @@ const WishlistPage = () => {
           const wishlistData = await getWishlist();
           const transformedItems = wishlistData.map(item => ({
             ...item.product,
-            id: item.id,
+            wishlistId: item.id,
+            productId: item.product.id,
             name: item.product.short_description || "Unnamed Product",
             brand: item.product.brand_name || "No Brand",
             price: Number(item.product.final_price) || 0,
@@ -95,11 +97,11 @@ const WishlistPage = () => {
   }, [])
 
   const handleAddToCart = async (productId, options = {}) => {
-    const product = wishlistItems.find((item) => item.id === productId)
+    const product = wishlistItems.find((item) => item.productId === productId)
     if (!product || !product.inStock) return
 
     try {
-      await addToCart(productId, options.quantity || 1);
+      await addToCart(product.productId, options.quantity || 1);
       showNotification(`${product.name} added to cart!`, "success")
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -123,6 +125,12 @@ const WishlistPage = () => {
     showNotification(`${selectedProducts.length} items added to cart!`, "success")
   }
 
+  const handleBuyNow = (item) => {
+    setItemToCheckout(item)
+    setShowCheckout(true)
+  }
+
+
   const handleRemoveSelected = async () => {
     if (selectedItems.size === 0) {
       showNotification("No items selected!", "error")
@@ -134,7 +142,7 @@ const WishlistPage = () => {
       
       // Remove from backend
       for (const product of selectedProducts) {
-        await removeFromWishlist(product.id);
+        await removeFromWishlist(product.wishlistId);
       }
 
       // Update local state
@@ -163,7 +171,7 @@ const WishlistPage = () => {
       try {
         // Remove all items from backend
         for (const item of wishlistItems) {
-          await removeFromWishlist(item.id);
+          await removeFromWishlist(item.wishlistId);
         }
 
         // Update local state
@@ -247,12 +255,11 @@ const WishlistPage = () => {
     }
 
     // Create CSV content
-    const csvHeaders = ["Name", "Price", "Original Price", "Category", "Brand", "Rating", "In Stock", "Added Date"]
+    const csvHeaders = ["Name", "Price", "Original Price",  "Brand", "Rating", "In Stock", "Added Date"]
     const csvRows = wishlistData.map((item) => [
       `"${item.name}"`,
       item.price,
       item.originalPrice || "",
-      item.category,
       item.brand,
       item.rating,
       item.inStock ? "Yes" : "No",
@@ -287,7 +294,7 @@ const WishlistPage = () => {
       const product = wishlistItems.find(item => item.id === id);
       if (!product) return;
 
-      await removeFromWishlist(id);
+      await removeFromWishlist(product.wishlistId);
       
       // Update local state
       setWishlistItems((prev) => prev.filter((item) => item.id !== id));
@@ -410,13 +417,13 @@ const WishlistPage = () => {
           >
             <Heart className={`w-4 h-4 ${favorites.has(item.id) ? "text-red-500 fill-current" : "text-gray-400"}`} />
           </button>
-          <button
+          {/* <button
             onClick={() => handleViewProduct(item)}
             className="w-8 h-8 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-300 shadow-lg"
             title="View Product Details"
           >
             <Eye className="w-4 h-4 text-blue-500" />
-          </button>
+          </button> */}
         </div>
       </div>
       <div className="p-4">
@@ -429,12 +436,12 @@ const WishlistPage = () => {
         <div className="flex items-center space-x-2">
   {item.isOnSale && item.discount > 0 ? (
     <>
-      <span className="text-lg font-bold text-red-600">${item.price.toFixed(2)}</span>
-      <span className="text-sm text-gray-500 line-through">${item.originalPrice.toFixed(2)}</span>
+      <span className="text-lg font-bold text-red-600">₹{item.price.toFixed(2)}</span>
+      <span className="text-sm text-gray-500 line-through">₹{item.originalPrice.toFixed(2)}</span>
 
     </>
   ) : (
-    <span className="text-lg font-bold text-gray-900">${item.originalPrice.toFixed(2)}</span>
+    <span className="text-lg font-bold text-gray-900">₹{item.originalPrice.toFixed(2)}</span>
   )}
 </div>
           <span className="text-sm text-gray-500">{item.category}</span>
@@ -444,7 +451,7 @@ const WishlistPage = () => {
             <span className="text-xs text-gray-500">Added: {new Date(item.addedDate).toLocaleDateString()}</span>
           </div>
           <button
-            onClick={() => handleAddToCart(item.id)}
+            onClick={() => handleAddToCart(item.productId)}
             disabled={!item.inStock}
             className={`p-2 rounded-full transition-all duration-300 transform hover:scale-105 ${
               item.inStock
@@ -525,7 +532,7 @@ const WishlistPage = () => {
               {/* Filters */}
               <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
                 {/* Category Filter */}
-                <div className="relative w-full sm:w-auto">
+                {/* <div className="relative w-full sm:w-auto">
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
@@ -538,7 +545,7 @@ const WishlistPage = () => {
                     ))}
                   </select>
                   <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-                </div>
+                </div> */}
 
                 <div className="relative w-full sm:w-auto">
                   <select
@@ -675,13 +682,13 @@ const WishlistPage = () => {
               Quick Actions
             </h2>
             <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <button
+              {/* <button
                 onClick={handleShareWishlist}
                 className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-full hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center space-x-2"
               >
                 <Share2 className="w-5 h-5" />
                 <span>Share Wishlist</span>
-              </button>
+              </button> */}
               <button
                 onClick={handleExportWishlist}
                 className="bg-gradient-to-r from-green-500 to-teal-500 text-white px-6 py-3 rounded-full hover:from-green-600 hover:to-teal-600 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center space-x-2"
@@ -708,6 +715,7 @@ const WishlistPage = () => {
         onClose={handleCloseProductDetail}
         onAddToCart={handleAddToCart}
         onToggleWishlist={handleToggleWishlist}
+        onBuyNow={handleBuyNow}
       />
       {/* Notification */}
       {notification && (
@@ -736,7 +744,7 @@ const WishlistPage = () => {
             <ShoppingCart className="w-5 h-5 text-purple-600" />
             <span className="font-medium">Cart: {cart.length} items</span>
             <span className="text-sm text-gray-500">
-              ${cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}
+            ₹{cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}
             </span>
           </div>
         </div>
