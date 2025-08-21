@@ -1,36 +1,54 @@
-# Python / Django
+# -----------------------------
+# Python
+# -----------------------------
 *.py[cod]
 __pycache__/
-*.sqlite3
-*.log
-*.pot
 *.pyc
 *.pyo
 *.pyd
+*.log
+*.pot
 *.db
 *.db-journal
+*.sqlite3
+
+# -----------------------------
+# Django
+# -----------------------------
 media/
 staticfiles/
+backend/fashion_backend/media/
+
+# -----------------------------
+# Environment files (Secrets)
+# -----------------------------
 .env
 *.env
 .env.*
+!example.env   # keep a safe template for contributors
 
-
-# Virtual environment
+# -----------------------------
+# Virtual environments
+# -----------------------------
 venv/
 env/
+.venv/
 
+# -----------------------------
 # React / Node / Tailwind
+# -----------------------------
 frontend/node_modules/
 frontend/build/
 frontend/dist/
-frontend/.env
 frontend/.next/
 frontend/.cache/
+frontend/.env
 frontend/yarn.lock
 frontend/package-lock.json
 
-# ML / Models
+# -----------------------------
+# Machine Learning / Models
+# -----------------------------
 *.pt
 *.pth
 *.h5
@@ -39,21 +57,12 @@ frontend/package-lock.json
 models/
 checkpoints/
 
+# -----------------------------
 # OS / IDE files
+# -----------------------------
 .DS_Store
 .vscode/
 .idea/
 *.swp
 *.bak
 *.tmp
-
-
-# Python cache
-__pycache__/
-*.pyc
-
-# Django media files
-/backend/fashion_backend/media/
-
-# .gitignore
-*.env
