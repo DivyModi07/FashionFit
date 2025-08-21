@@ -1,4 +1,6 @@
-import axios from 'axios';
+// src/api/cart.js
+
+import axiosInstance from './axios'; // 👈 CHANGED
 
 const API_BASE_URL = 'http://127.0.0.1:8000/api/products';
 
@@ -11,7 +13,7 @@ export const getCart = async () => {
       return [];
     }
 
-    const response = await axios.get(`${API_BASE_URL}/cart/`, {
+    const response = await axiosInstance.get(`/products/cart/`, { // 👈 CHANGED
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -19,8 +21,8 @@ export const getCart = async () => {
     return response.data;
   } catch (error) {
     console.error('Error fetching cart:', error);
+    // The interceptor will now handle the 401 error, so this redirect is a fallback.
     if (error.response?.status === 401) {
-      // Token expired or invalid, redirect to login
       localStorage.removeItem('access_token');
       window.location.href = '/login';
     }
@@ -32,14 +34,12 @@ export const getCart = async () => {
 export const addToCart = async (productId, quantity = 1) => {
   try {
     const token = localStorage.getItem('access_token');
-    console.log('addToCart - Token check:', !!token, 'Token length:', token?.length);
     if (!token) {
-      console.log('No token found, redirecting to login');
       window.location.href = '/login';
       return null;
     }
 
-    const response = await axios.post(`${API_BASE_URL}/cart/add/`, {
+    const response = await axiosInstance.post(`/products/cart/add/`, { // 👈 CHANGED
       product_id: productId,
       quantity: quantity,
     }, {
@@ -51,12 +51,7 @@ export const addToCart = async (productId, quantity = 1) => {
     return response.data;
   } catch (error) {
     console.error('Error adding to cart:', error);
-    if (error.response?.status === 401) {
-      // Token expired or invalid, redirect to login
-      localStorage.removeItem('access_token');
-      window.location.href = '/login';
-    }
-    throw error;
+    throw error; // The interceptor will handle it
   }
 };
 
@@ -65,12 +60,11 @@ export const removeFromCart = async (cartItemId) => {
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
-      console.log('No token found, redirecting to login');
       window.location.href = '/login';
       return null;
     }
 
-    const response = await axios.delete(`${API_BASE_URL}/cart/${cartItemId}/delete/`, {
+    const response = await axiosInstance.delete(`/products/cart/${cartItemId}/delete/`, { // 👈 CHANGED
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -78,11 +72,6 @@ export const removeFromCart = async (cartItemId) => {
     return response.data;
   } catch (error) {
     console.error('Error removing from cart:', error);
-    if (error.response?.status === 401) {
-      // Token expired or invalid, redirect to login
-      localStorage.removeItem('access_token');
-      window.location.href = '/login';
-    }
     throw error;
   }
 };
@@ -92,12 +81,11 @@ export const updateCartItemQuantity = async (cartItemId, quantity) => {
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
-      console.log('No token found, redirecting to login');
       window.location.href = '/login';
       return null;
     }
 
-    const response = await axios.patch(`${API_BASE_URL}/cart/${cartItemId}/update/`, {
+    const response = await axiosInstance.patch(`/products/cart/${cartItemId}/update/`, { // 👈 CHANGED
       quantity: quantity,
     }, {
       headers: {
@@ -108,11 +96,6 @@ export const updateCartItemQuantity = async (cartItemId, quantity) => {
     return response.data;
   } catch (error) {
     console.error('Error updating cart item:', error);
-    if (error.response?.status === 401) {
-      // Token expired or invalid, redirect to login
-      localStorage.removeItem('access_token');
-      window.location.href = '/login';
-    }
     throw error;
   }
 };

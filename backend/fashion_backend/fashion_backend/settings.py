@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from decouple import config
 import os
-
+from datetime import timedelta
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -41,6 +41,12 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # default 5 min → change as needed
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # refresh token lifetime
+    'ROTATE_REFRESH_TOKENS': True,                  # optional: refresh refresh tokens
+    'BLACKLIST_AFTER_ROTATION': True,               # optional
+}
 
 
 
@@ -127,7 +133,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'FashionFit_db',
         'USER': 'postgres',
-        'PASSWORD': 'jenil@12',
+        'PASSWORD': 'DivyModi_12',
         'HOST': 'localhost',
         'PORT': '5432',
     }

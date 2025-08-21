@@ -1,31 +1,42 @@
-import axios from 'axios';
-
-const baseURL = 'http://localhost:8000/';
+import axios from "axios";
+import { refreshToken, logoutUser } from "./auth";
 
 const axiosInstance = axios.create({
-  baseURL,
-  timeout: 5000,
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: "http://localhost:8000/api",
+  headers: { "Content-Type": "application/json" },
 });
 
-// --- THIS IS THE CRITICAL FIX ---
-// This interceptor runs before every request is sent.
 axiosInstance.interceptors.request.use(
   (config) => {
-    // It gets the token from localStorage using the CORRECT key.
-    const accessToken = localStorage.getItem('accessToken');
-    
-    // If the token exists, it adds it to the request header.
-    if (accessToken) {
-      config.headers['Authorization'] = `Bearer ${accessToken}`;
-    }
-    
+    const token = localStorage.getItem("access_token");
+    if (token) config.headers["Authorization"] = `Bearer ${token}`;
     return config;
   },
-  (error) => {
+  (error) => Promise.reject(error)
+);
+
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      localStorage.getItem("refresh_token")
+    ) {
+      originalRequest._retry = true;
+      const result = await refreshToken();
+
+      if (result.success) {
+        originalRequest.headers["Authorization"] = `Bearer ${result.access}`;
+        return axiosInstance(originalRequest);
+      } else {
+        logoutUser();
+        window.location.href = "/login";
+      }
+    }
+
     return Promise.reject(error);
   }
 );

@@ -8,7 +8,7 @@ import axios from 'axios';
 import { addToCart } from '../api/cart';
 import { addToWishlist } from '../api/wishlist';
 import ProductDetails from './ProductDetails';
-import { placeOrder } from '../api/order';
+import { useCartWishlist } from '../context/CartWishlistContext';
 
 const Notification = ({ message, show }) => {
   if (!show) return null;
@@ -20,9 +20,8 @@ const Notification = ({ message, show }) => {
   );
 };
 
-
-  
 const TrendingPage = () => {
+  const { refreshCounts } = useCartWishlist();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState(new Set());
@@ -31,8 +30,6 @@ const TrendingPage = () => {
   const [notification, setNotification] = useState({ show: false, message: '' });
   const navigate = useNavigate();
 
-
-  
   useEffect(() => {
     setLoading(true);
     axios.get('http://127.0.0.1:8000/api/products/all/')
@@ -43,8 +40,9 @@ const TrendingPage = () => {
             name: p.short_description || "Unnamed Product",
             brand: p.brand_name || "No Brand",
             description: p.short_description || "",
-            price: Number(p.final_price) || 0,
-            originalPrice: Number(p.initial_price) || 0,
+            // 👈 FIX: Corrected property names to match ProductDetails
+            finalPrice: Number(p.final_price) || 0,
+            initialPrice: Number(p.initial_price) || 0,
             image: p.model_image || p.cutout_image || "/placeholder.svg",
             model_image: p.model_image,
             cutout_image: p.cutout_image,
@@ -76,7 +74,10 @@ const TrendingPage = () => {
   
   const handleAddToCart = (productId) => {
     addToCart(productId, 1)
-      .then(() => showNotification("Added to cart!"))
+      .then(() => {
+        showNotification("Added to cart!");
+        refreshCounts();
+      })
       .catch(() => showNotification("Error adding to cart."));
   };
   
@@ -86,6 +87,7 @@ const TrendingPage = () => {
     
     if (isFavorite) {
       newFavorites.delete(productId);
+      // NOTE: You still need to implement removeFromWishlist in your API
       showNotification("Removed from wishlist.");
     } else {
       newFavorites.add(productId);
@@ -93,6 +95,7 @@ const TrendingPage = () => {
       showNotification("Added to wishlist!");
     }
     setFavorites(newFavorites);
+    refreshCounts();
   };
 
   const renderStars = (rating) => [...Array(5)].map((_, i) => <Star key={i} className={`w-4 h-4 ${i < Math.floor(rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />);
@@ -126,7 +129,7 @@ const TrendingPage = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {products.map((product) => (
-                <div key={product.id} className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
+                <div key={product.id} className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden" onClick={() => handleViewDetails(product)}>
                   <div className="relative">
                     <img src={product.image} alt={product.name} className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300" />
                     {product.discount > 0 && (
@@ -134,12 +137,12 @@ const TrendingPage = () => {
                     )}
                     
                     <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <button onClick={() => handleToggleWishlist(product.id)} className="w-8 h-8 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-300 shadow-md">
+                      <button onClick={(e) => { e.stopPropagation(); handleToggleWishlist(product.id); }} className="w-8 h-8 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-300 shadow-md">
                         <Heart className={`w-4 h-4 ${favorites.has(product.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`} />
                       </button>
-                      {/* <button onClick={() => handleViewDetails(product)} className="w-8 h-8 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-300 shadow-md">
+                      <button onClick={(e) => { e.stopPropagation(); handleViewDetails(product); }} className="w-8 h-8 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-300 shadow-md">
                         <Eye className="w-4 h-4 text-purple-600" />
-                      </button> */}
+                      </button>
                     </div>
                   </div>
                   <div className="p-4">
@@ -149,21 +152,17 @@ const TrendingPage = () => {
                       <span className="text-sm text-gray-500 ml-2">({product.rating})</span>
                     </div>
                     <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-  {product.isOnSale && product.discount > 0 ? (
-    <>
-      <span className="text-lg font-bold text-red-600">₹{product.price.toFixed(2)}</span>
-      <span className="text-sm text-gray-500 line-through">₹{product.originalPrice.toFixed(2)}</span>
-
-    </>
-  ) : (
-    <>
-         <span className="text-lg font-bold text-red-600">₹{product.price.toFixed(2)}</span>
-         <span className="text-sm text-gray-500 line-through">₹{product.originalPrice.toFixed(2)}</span> 
-    </>
-  )}
-</div>
-                      <button onClick={() => handleAddToCart(product.id)} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-2 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105">
+                      <div className="flex items-center space-x-2">
+                        {product.isOnSale && product.discount > 0 ? (
+                          <>
+                            <span className="text-lg font-bold text-red-600">₹{product.finalPrice.toFixed(2)}</span>
+                            <span className="text-sm text-gray-500 line-through">₹{product.initialPrice.toFixed(2)}</span>
+                          </>
+                        ) : (
+                          <span className="text-lg font-bold text-gray-900">₹{product.initialPrice.toFixed(2)}</span>
+                        )}
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product.id); }} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-2 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105">
                         <ShoppingCart className="w-4 h-4" />
                       </button>
                     </div>

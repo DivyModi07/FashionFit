@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Heart, 
-  ShoppingCart, 
-  Star, 
-  TrendingUp, 
-  Sparkles, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  ShoppingCart,
+  Star,
+  TrendingUp,
+  Sparkles,
   Clock,
   ArrowRight,
   Grid,
@@ -52,71 +52,45 @@ const Homepage = () => {
     }
   ];
 
-    // UPDATED: Helper function to safely parse prices from the API
+  useEffect(() => {
+    const items = getRecentlyViewed();
+    const mappedItems = items.map(p => ({
+      ...p,
+      id: p.id,
+      name: p.short_description || p.name || "Unnamed Product",
+      brand: p.brand_name || p.brand || "No Brand",
+      description: p.short_description || p.description || "",
+      price: Number(p.final_price) || Number(p.initial_price) || 0,
+      originalPrice: Number(p.initial_price) || 0,
+      image: p.model_image || p.cutout_image || p.image || "/placeholder.svg",
+      rating: p.rating || 4.5,
+      discount: p.is_on_sale
+        ? parseInt(p.discount_label?.replace('% Off', '') || "0", 10)
+        : (p.discount || 0),
+      isOnSale: p.is_on_sale,
+    }));
+    setRecentlyViewedItems(mappedItems);
+  }, []);
 
+  const trendingItems = products.filter(p => p.discount > 0).slice(0, 4);
 
-  // This data is static for now. A full implementation would use localStorage to track visited items.
-  const recentlyViewed = [
-    { id: 1, name: "Elegant Summer Dress", price: 89.99, originalPrice: 129.99, image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", rating: 4.5 },
-    { id: 2, name: "Casual Denim Jacket", price: 79.99, originalPrice: 99.99, image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", rating: 4.3 },
-    { id: 3, name: "Stylish Sneakers", price: 129.99, originalPrice: 159.99, image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", rating: 4.7 },
-    { id: 4, name: "Designer Handbag", price: 199.99, originalPrice: 249.99, image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80", rating: 4.6 }
-  ];
-
-// Helper: parse price safely from string or number
-const parsePrice = (val) => {
-  if (typeof val === "number") return val;
-  if (typeof val === "string") {
-    return parseFloat(val.replace(/[^0-9.]/g, "")) || 0;
-  }
-  return 0;
-};
-
-useEffect(() => {
-  const items = getRecentlyViewed();
-  const mappedItems = items.map(p => ({
-    ...p,
-    id: p.id,
-    name: p.short_description || p.name || "Unnamed Product",
-    brand: p.brand_name || p.brand || "No Brand",
-    description: p.short_description || p.description || "",
-    price: Number(p.final_price || p.price) || 0,
-    originalPrice: Number(p.initial_price || p.originalPrice || p.price) || 0,
-    image: p.model_image || p.cutout_image || p.image || "/placeholder.svg",
-    rating: p.rating || 4.5,
-    discount: p.is_on_sale
-      ? parseInt(p.discount_label?.replace('% Off', '') || "0", 10)
-      : (p.discount || 0),
-  }));
-  setRecentlyViewedItems(mappedItems);
-}, []);
-
-
-      
-
-
-  const trendingItems = products.filter(p => p.discount > 0).slice(0, 4); 
-
-
-  // Fetch all products to find trending (discounted) items
   useEffect(() => {
     axios.get('http://127.0.0.1:8000/api/products/all/')
       .then(res => {
         const allProducts = res.data.map(p => ({
             id: p.id,
             name: p.short_description,
-            price: p.final_price,
-            originalPrice: p.initial_price,
+            price: Number(p.final_price) || Number(p.initial_price) || 0,
+            originalPrice: Number(p.initial_price) || 0,
             image: p.model_image || p.cutout_image,
-            rating: 4.5, // Using dummy rating
+            rating: 4.5,
             discount: p.is_on_sale ? parseInt(p.discount_label?.replace('% Off', '') || "0", 10) : 0,
+            isOnSale: p.is_on_sale,
         }));
         setProducts(allProducts);
       })
       .catch(err => console.error("Failed to fetch products", err));
   }, []);
-
-
 
   useEffect(() => {
       const slideInterval = setInterval(() => {
@@ -146,20 +120,6 @@ useEffect(() => {
 
     return () => observer.disconnect();
   }, []);
-
-  const handleButtonClick = (action, id) => {
-    if (action === "add-to-cart") {
-      axios.post(`http://127.0.0.1:8000/api/products/cart/add/`, { product_id: id })
-        .then(() => alert("Added to cart ✅"))
-        .catch(() => alert("Login required! ❌"));
-    }
-    if (action === "add-to-wishlist") {
-      axios.post(`http://127.0.0.1:8000/api/products/wishlist/add/`, { product_id: id })
-        .then(() => alert("Added to wishlist ❤️"))
-        .catch(() => alert("Login required! ❌"));
-    }
-  };
-  
 
   const renderStars = (rating) => {
     return [...Array(5)].map((_, i) => (
@@ -191,9 +151,9 @@ useEffect(() => {
           <span className="text-sm text-gray-500 ml-2">({product.rating})</span>
         </div>
   
-        {/* ✅ Price section */}
         <div className="flex items-center space-x-2">
-          {Number(product.originalPrice) > Number(product.price) ? (
+          {/* 👈 FIX: Corrected price display logic */}
+          {product.isOnSale && Number(product.originalPrice) > Number(product.price) ? (
             <>
               <span className="text-lg font-bold text-red-600">
                 ₹{Number(product.price).toFixed(2)}
@@ -204,7 +164,7 @@ useEffect(() => {
             </>
           ) : (
             <span className="text-lg font-bold text-gray-600">
-              ₹{Number(product.price ?? product.originalPrice).toFixed(2)}
+              ₹{Number(product.originalPrice).toFixed(2)}
             </span>
           )}
         </div>
@@ -216,8 +176,7 @@ useEffect(() => {
     <>
     <Navbar />
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 mt-[60px]">
-      
-      {/* Custom animations */}
+      <Animation />
       <style jsx>{`
         @keyframes fadeInUp {
           from { transform: translateY(30px); opacity: 0; }
@@ -225,9 +184,6 @@ useEffect(() => {
         }
         .animate-fade-in-up { animation: fadeInUp 0.6s ease-out; }
       `}</style>
-      <Animation />
-
-
       <section className="relative overflow-hidden py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative h-[450px] md:h-[600px] rounded-3xl overflow-hidden shadow-2xl">
@@ -266,7 +222,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Slide Indicators */}
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
               {heroSlides.map((_, index) => (
                 <button
@@ -282,7 +237,6 @@ useEffect(() => {
         </div>
       </section>
 
-      {/* Recently Viewed Section */}
       <section className="py-16 bg-white" data-animate id="recently-viewed">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`flex items-center justify-between mb-12 transition-all duration-700 ${
@@ -319,7 +273,6 @@ useEffect(() => {
         </div>
       </section>
 
-      {/* Trending Products Section */}
       <section className="py-16" data-animate id="trending">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`flex items-center justify-between mb-12 transition-all duration-700 ${
@@ -365,8 +318,3 @@ useEffect(() => {
 };
 
 export default Homepage;
-
-
-
-
-

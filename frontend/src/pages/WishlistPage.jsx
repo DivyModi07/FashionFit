@@ -1,48 +1,32 @@
-import { useState, useEffect } from "react"
-import {
-  Heart,
-  ShoppingCart,
-  Star,
-  X,
-  Grid,
-  List,
-  ArrowRight,
-  Sparkles,
-  Share2,
-  Download,
-  Search,
-  ChevronDown,
-  Eye,
-} from "lucide-react"
-import Navbar from '../components/Navbar'
-import Footer from '../components/Footer'
-import Animation from '../components/Animation'
-import ProductDetails from "./ProductDetails"
-import { getWishlist, removeFromWishlist } from '../api/wishlist'
-import { addToCart } from '../api/cart'
-
-
+import { useState, useEffect } from "react";
+import { Heart, ShoppingCart, Star, X, Grid, List, ArrowRight, Sparkles, Share2, Download, Search, ChevronDown, Eye } from "lucide-react";
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import Animation from '../components/Animation';
+import ProductDetails from "./ProductDetails";
+import { getWishlist, removeFromWishlist } from '../api/wishlist';
+import { addToCart } from '../api/cart';
+import { useCartWishlist } from '../context/CartWishlistContext';
 
 const WishlistPage = () => {
-  const [cart, setCart] = useState([])
-  const [notification, setNotification] = useState(null)
-  const [favorites, setFavorites] = useState(new Set())
-  const [selectedItems, setSelectedItems] = useState(new Set())
-  const [sortBy, setSortBy] = useState("recent")
-  const [filterBy, setFilterBy] = useState("all")
-  const [categoryFilter, setCategoryFilter] = useState("all")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [isVisible, setIsVisible] = useState({})
-  const [selectedProduct, setSelectedProduct] = useState(null)
-  const [isProductDetailOpen, setIsProductDetailOpen] = useState(false)
-  const [itemToCheckout, setItemToCheckout] = useState(null)
-  const [wishlistItems, setWishlistItems] = useState([])
-  const [showCheckout, setShowCheckout] = useState(false)
+  const { refreshCounts } = useCartWishlist();
+  const [cart, setCart] = useState([]);
+  const [notification, setNotification] = useState(null);
+  const [favorites, setFavorites] = useState(new Set());
+  const [selectedItems, setSelectedItems] = useState(new Set());
+  const [sortBy, setSortBy] = useState("recent");
+  const [filterBy, setFilterBy] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isVisible, setIsVisible] = useState({});
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isProductDetailOpen, setIsProductDetailOpen] = useState(false);
+  const [itemToCheckout, setItemToCheckout] = useState(null);
+  const [wishlistItems, setWishlistItems] = useState([]);
+  const [showCheckout, setShowCheckout] = useState(false);
 
-  // Get unique categories for filter
   const categories = ["all", ...new Set(wishlistItems.map((item) => item.category))]
 
-  // Fetch wishlist data on component mount
   useEffect(() => {
     const fetchWishlistData = async () => {
       try {
@@ -61,8 +45,8 @@ const WishlistPage = () => {
             inStock: (item.product.stock_total || 0) > 0,
             discount: item.product.is_on_sale ? parseInt(item.product.discount_label?.replace('% Off', '') || "0", 10) : 0,
             isOnSale: item.product.is_on_sale,
-            rating: 4.5, // Dummy rating
-            reviews: [], // Dummy reviews
+            rating: 4.5,
+            reviews: [],
             addedDate: item.added_at,
           }));
           setWishlistItems(transformedItems);
@@ -73,8 +57,8 @@ const WishlistPage = () => {
       }
     };
     fetchWishlistData();
-}, []);
-  // Intersection Observer for animations
+  }, []);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -96,18 +80,19 @@ const WishlistPage = () => {
     return () => observer.disconnect()
   }, [])
 
-  const handleAddToCart = async (productId, options = {}) => {
-    const product = wishlistItems.find((item) => item.productId === productId)
-    if (!product || !product.inStock) return
+   const handleAddToCart = async (productId, options = {}) => {
+    const product = wishlistItems.find((item) => item.productId === productId);
+    if (!product || !product.inStock) return;
 
     try {
       await addToCart(product.productId, options.quantity || 1);
-      showNotification(`${product.name} added to cart!`, "success")
+      showNotification(`${product.name} added to cart!`, "success");
+      refreshCounts();
     } catch (error) {
       console.error('Error adding to cart:', error);
-      showNotification('Failed to add item to cart', "error")
+      showNotification('Failed to add item to cart', "error");
     }
-  }
+  };
 
   const handleAddSelectedToCart = () => {
     const selectedProducts = wishlistItems.filter((item) => selectedItems.has(item.id) && item.inStock)
@@ -130,7 +115,6 @@ const WishlistPage = () => {
     setShowCheckout(true)
   }
 
-
   const handleRemoveSelected = async () => {
     if (selectedItems.size === 0) {
       showNotification("No items selected!", "error")
@@ -140,12 +124,10 @@ const WishlistPage = () => {
     try {
       const selectedProducts = wishlistItems.filter((item) => selectedItems.has(item.id));
       
-      // Remove from backend
       for (const product of selectedProducts) {
         await removeFromWishlist(product.wishlistId);
       }
 
-      // Update local state
       setWishlistItems((prev) => prev.filter((item) => !selectedItems.has(item.id)));
       setFavorites((prev) => {
         const newFavorites = new Set(prev)
@@ -154,7 +136,8 @@ const WishlistPage = () => {
       })
 
       setSelectedItems(new Set())
-      showNotification(`${selectedItems.size} items removed from wishlist!`, "success")
+      showNotification(`${selectedItems.size} items removed from wishlist!`, "success");
+      refreshCounts(); // 👈 FIX: Refresh count after removing selected items
     } catch (error) {
       console.error('Error removing items:', error);
       showNotification('Failed to remove items from wishlist', "error")
@@ -169,16 +152,15 @@ const WishlistPage = () => {
 
     if (window.confirm("Are you sure you want to clear your entire wishlist? This action cannot be undone.")) {
       try {
-        // Remove all items from backend
         for (const item of wishlistItems) {
           await removeFromWishlist(item.wishlistId);
         }
 
-        // Update local state
         setWishlistItems([]);
         setFavorites(new Set())
         setSelectedItems(new Set())
-        showNotification("Wishlist cleared successfully!", "success")
+        showNotification("Wishlist cleared successfully!", "success");
+        refreshCounts(); // 👈 FIX: Refresh count after clearing list
       } catch (error) {
         console.error('Error clearing wishlist:', error);
         showNotification('Failed to clear wishlist', "error")
@@ -194,11 +176,9 @@ const WishlistPage = () => {
       sharedAt: new Date().toISOString(),
     }
 
-    // Create shareable content
-    const shareText = `Check out my wishlist! ${wishlistData.totalItems} amazing items worth $${wishlistData.totalValue.toFixed(2)}`
+    const shareText = `Check out my wishlist! ${wishlistData.totalItems} amazing items worth ₹${wishlistData.totalValue.toFixed(2)}`
     const shareUrl = `${window.location.origin}/wishlist/shared/${btoa(JSON.stringify(wishlistData))}`
 
-    // Try native sharing first
     if (navigator.share) {
       try {
         await navigator.share({
@@ -218,7 +198,6 @@ const WishlistPage = () => {
   }
 
   const fallbackShare = (text, url) => {
-    // Copy to clipboard as fallback
     const shareContent = `${text}\n${url}`
 
     if (navigator.clipboard) {
@@ -231,7 +210,6 @@ const WishlistPage = () => {
           showNotification("Unable to share wishlist", "error")
         })
     } else {
-      // Fallback for older browsers
       const textArea = document.createElement("textarea")
       textArea.value = shareContent
       document.body.appendChild(textArea)
@@ -254,7 +232,6 @@ const WishlistPage = () => {
       return
     }
 
-    // Create CSV content
     const csvHeaders = ["Name", "Price", "Original Price",  "Brand", "Rating", "In Stock", "Added Date"]
     const csvRows = wishlistData.map((item) => [
       `"${item.name}"`,
@@ -268,7 +245,6 @@ const WishlistPage = () => {
 
     const csvContent = [csvHeaders, ...csvRows].map((row) => row.join(",")).join("\n")
 
-    // Create and download file
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
     const link = document.createElement("a")
     const url = URL.createObjectURL(blob)
@@ -296,20 +272,20 @@ const WishlistPage = () => {
 
       await removeFromWishlist(product.wishlistId);
       
-      // Update local state
       setWishlistItems((prev) => prev.filter((item) => item.id !== id));
       setFavorites((prev) => {
-        const newFavorites = new Set(prev)
-        newFavorites.delete(id)
-        return newFavorites
-      })
+        const newFavorites = new Set(prev);
+        newFavorites.delete(id);
+        return newFavorites;
+      });
       
-      showNotification(`${product.name} removed from wishlist!`, "success")
+      showNotification(`${product.name} removed from wishlist!`, "success");
+      refreshCounts();
     } catch (error) {
       console.error('Error removing from wishlist:', error);
-      showNotification('Failed to remove from wishlist', "error")
+      showNotification('Failed to remove from wishlist', "error");
     }
-  }
+  };
 
   const toggleItemSelection = (id) => {
     setSelectedItems((prev) => {

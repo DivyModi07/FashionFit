@@ -21,7 +21,7 @@ import {
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import Animation from '../components/Animation'
-import { placeOrder } from "../api/order"; // --- NEW: Import the placeOrder function ---
+import { placeOrder } from "../api/order"; 
 import axios from 'axios';
 
 const Checkout = ({
@@ -40,7 +40,7 @@ const Checkout = ({
   const [showAddAddress, setShowAddAddress] = useState(false)
   const [orderPlaced, setOrderPlaced] = useState(false)
   const [orderId, setOrderId] = useState("")
-  const [errorMessage, setErrorMessage] = useState(""); // --- NEW: State for error messages ---
+  const [errorMessage, setErrorMessage] = useState(""); 
 
   // New state for payment details
   const [cardDetails, setCardDetails] = useState({
@@ -62,15 +62,14 @@ const Checkout = ({
         
         const user = response.data;
         if (user.address) {
-          // Format the fetched address to match the structure your component expects
           const formattedAddress = {
             id: 1,
             name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
-            phone: user.phone || "", // Uses the 'phone' field from your model
+            phone: user.phone || "",
             address: user.address,
             city: user.city || "",
             state: user.state || "",
-            zipCode: user.zipcode || "", // Note: model has 'zipcode', not 'zipCode'
+            zipCode: user.zipcode || "",
             isDefault: true,
             type: "Home",
           };
@@ -83,7 +82,7 @@ const Checkout = ({
     };
 
     fetchUserAddress();
-  }, []); // The empty array ensures this runs only once on mount
+  }, []);
 
 
   const [newAddress, setNewAddress] = useState({
@@ -96,9 +95,6 @@ const Checkout = ({
     type: "Home",
   })
 
-  // --- (The rest of the component state and functions like `paymentMethods`, `useEffect`, etc., remain the same) ---
-
-  // ... (keep all your existing functions like handleAddAddress, isPaymentValid, renderStars)
     const paymentMethods = [
     {
       id: 1,
@@ -114,13 +110,6 @@ const Checkout = ({
       icon: Smartphone,
       description: "Pay using UPI ID or QR code",
     },
-    // {
-    //   id: 3,
-    //   type: "wallet",
-    //   name: "Digital Wallet",
-    //   icon: Wallet,
-    //   description: "PayPal, Apple Pay, Google Pay",
-    // },
     {
       id: 4,
       type: "cashondelivery",
@@ -191,11 +180,9 @@ const Checkout = ({
     } else if (selectedPayment.type === "upi") {
       return upiId.trim() !== "" && upiId.includes("@")
     }
-    // For wallet and netbanking, assume valid if selected
     return true
   }
   
-  // --- UPDATED: This is the main change ---
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       setErrorMessage("Please select a shipping address.");
@@ -205,17 +192,16 @@ const Checkout = ({
     setIsLoading(true);
     setErrorMessage("");
 
-    // Format the address into a string for the backend TextField
     const formattedAddress = `${selectedAddress.name}\n${selectedAddress.address}\n${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.zipCode}\nPhone: ${selectedAddress.phone}`;
 
     try {
       const orderData = await placeOrder({
         shipping_address: formattedAddress,
-        billing_address: formattedAddress, // Using the same address for billing
+        billing_address: formattedAddress,
       });
 
       if (orderData) {
-        setOrderId(orderData.id); // Use the real order ID from the backend
+        setOrderId(orderData.id);
         setOrderPlaced(true);
       }
     } catch (error) {
@@ -233,9 +219,7 @@ const Checkout = ({
       />
     ))
   }
-  // --- (The rest of the component's JSX remains the same) ---
-
-  // --- UPDATED: Add a place to display the error message in the Review step ---
+  
   if (orderPlaced) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 flex items-center justify-center">
@@ -256,7 +240,7 @@ const Checkout = ({
               </div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-gray-600">Total Amount:</span>
-                <span className="font-bold text-lg text-green-600">${calculateTotal().toFixed(2)}</span>
+                <span className="font-bold text-lg text-green-600">₹{calculateTotal().toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Delivery Address:</span>
@@ -290,7 +274,7 @@ const Checkout = ({
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
-                onClick={() => (window.location.href = "/")}
+                onClick={() => (window.location.href = "/homepage")}
                 className="border-2 border-purple-500 text-purple-500 px-8 py-3 rounded-full font-semibold hover:bg-purple-50 transition-all duration-300"
               >
                 Continue Shopping
@@ -302,16 +286,11 @@ const Checkout = ({
     )
   }
   return (
-    // ... your existing JSX ...
-    // --- Inside the "Review Order" step (currentStep === 3) ---
-    // --- Add this block right above the "Back" and "Place Order" buttons ---
-    // ...
     <>
     <Navbar />
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100  mt-[60px]">
         <Animation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
           <button
             onClick={onBack}
@@ -360,9 +339,7 @@ const Checkout = ({
         
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
           <div className="lg:col-span-2">
-            {/* Step 1: Address */}
             {currentStep === 1 && (
               <div className="bg-white rounded-2xl shadow-lg p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -380,71 +357,21 @@ const Checkout = ({
                   <div className="mb-6 p-6 bg-gray-50 rounded-xl">
                     <h3 className="text-lg font-semibold mb-4">Add New Address</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <input
-                        type="text"
-                        placeholder="Full Name"
-                        value={newAddress.name}
-                        onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })}
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                      <input
-                        type="tel"
-                        placeholder="Phone Number"
-                        value={newAddress.phone}
-                        onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Address"
-                        value={newAddress.address}
-                        onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
-                        className="md:col-span-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                      <input
-                        type="text"
-                        placeholder="City"
-                        value={newAddress.city}
-                        onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                      <input
-                        type="text"
-                        placeholder="State"
-                        value={newAddress.state}
-                        onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                      <input
-                        type="text"
-                        placeholder="ZIP Code"
-                        value={newAddress.zipCode}
-                        onChange={(e) => setNewAddress({ ...newAddress, zipCode: e.target.value })}
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                      <select
-                        value={newAddress.type}
-                        onChange={(e) => setNewAddress({ ...newAddress, type: e.target.value })}
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      >
+                      <input type="text" placeholder="Full Name" value={newAddress.name} onChange={(e) => setNewAddress({ ...newAddress, name: e.target.value })} className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                      <input type="tel" placeholder="Phone Number" value={newAddress.phone} onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })} className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                      <input type="text" placeholder="Address" value={newAddress.address} onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })} className="md:col-span-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                      <input type="text" placeholder="City" value={newAddress.city} onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })} className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                      <input type="text" placeholder="State" value={newAddress.state} onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })} className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                      <input type="text" placeholder="ZIP Code" value={newAddress.zipCode} onChange={(e) => setNewAddress({ ...newAddress, zipCode: e.target.value })} className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+                      <select value={newAddress.type} onChange={(e) => setNewAddress({ ...newAddress, type: e.target.value })} className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" >
                         <option value="Home">Home</option>
                         <option value="Office">Office</option>
                         <option value="Other">Other</option>
                       </select>
                     </div>
                     <div className="flex gap-3 mt-4">
-                      <button
-                        onClick={handleAddAddress}
-                        className="bg-purple-500 text-white px-6 py-2 rounded-lg hover:bg-purple-600 transition-colors"
-                      >
-                        Save Address
-                      </button>
-                      <button
-                        onClick={() => setShowAddAddress(false)}
-                        className="border border-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        Cancel
-                      </button>
+                      <button onClick={handleAddAddress} className="bg-purple-500 text-white px-6 py-2 rounded-lg hover:bg-purple-600 transition-colors" > Save Address </button>
+                      <button onClick={() => setShowAddAddress(false)} className="border border-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-50 transition-colors" > Cancel </button>
                     </div>
                   </div>
                 )}
@@ -501,7 +428,6 @@ const Checkout = ({
               </div>
             )}
 
-            {/* Step 2: Payment */}
             {currentStep === 2 && (
               <div className="bg-white rounded-2xl shadow-lg p-6">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Payment Method</h2>
@@ -535,53 +461,15 @@ const Checkout = ({
                   ))}
                 </div>
 
-                {/* Payment Details Input Forms */}
                 {selectedPayment?.type === "card" && (
                   <div className="mb-6 p-6 bg-gray-50 rounded-xl">
                     <h3 className="text-lg font-semibold mb-4">Credit Card Details</h3>
                     <div className="grid grid-cols-1 gap-4">
-                      <input
-                        type="text"
-                        placeholder="Card Number"
-                        value={cardDetails.cardNumber}
-                        onChange={(e) =>
-                          setCardDetails({ ...cardDetails, cardNumber: e.target.value.replace(/\D/g, "").slice(0, 16) })
-                        }
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        maxLength={16}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Cardholder Name"
-                        value={cardDetails.cardholderName}
-                        onChange={(e) => setCardDetails({ ...cardDetails, cardholderName: e.target.value })}
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
+                      <input type="text" placeholder="Card Number" value={cardDetails.cardNumber} onChange={(e) => setCardDetails({ ...cardDetails, cardNumber: e.target.value.replace(/\D/g, "").slice(0, 16) }) } className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" maxLength={16} />
+                      <input type="text" placeholder="Cardholder Name" value={cardDetails.cardholderName} onChange={(e) => setCardDetails({ ...cardDetails, cardholderName: e.target.value })} className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
                       <div className="grid grid-cols-2 gap-4">
-                        <input
-                          type="text"
-                          placeholder="MM/YY"
-                          value={cardDetails.expiryDate}
-                          onChange={(e) => {
-                            let value = e.target.value.replace(/\D/g, "") // Remove non-digits
-                            if (value.length > 2) {
-                              value = value.slice(0, 2) + "/" + value.slice(2, 4)
-                            }
-                            setCardDetails({ ...cardDetails, expiryDate: value })
-                          }}
-                          className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                          maxLength={5}
-                        />
-                        <input
-                          type="text"
-                          placeholder="CVV"
-                          value={cardDetails.cvv}
-                          onChange={(e) =>
-                            setCardDetails({ ...cardDetails, cvv: e.target.value.replace(/\D/g, "").slice(0, 4) })
-                          }
-                          className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                          maxLength={4}
-                        />
+                        <input type="text" placeholder="MM/YY" value={cardDetails.expiryDate} onChange={(e) => { let value = e.target.value.replace(/\D/g, ""); if (value.length > 2) { value = value.slice(0, 2) + "/" + value.slice(2, 4); } setCardDetails({ ...cardDetails, expiryDate: value }); }} className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" maxLength={5} />
+                        <input type="text" placeholder="CVV" value={cardDetails.cvv} onChange={(e) => setCardDetails({ ...cardDetails, cvv: e.target.value.replace(/\D/g, "").slice(0, 4) }) } className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" maxLength={4} />
                       </div>
                     </div>
                   </div>
@@ -599,27 +487,6 @@ const Checkout = ({
                     />
                   </div>
                 )}
-
-                {/* {selectedPayment?.type === "wallet" && (
-                  <div className="mb-6 p-6 bg-gray-50 rounded-xl text-center text-gray-700">
-                    <h3 className="text-lg font-semibold mb-2">Digital Wallet</h3>
-                    <p>You will be redirected to your chosen digital wallet to complete the payment.</p>
-                    <button className="mt-4 bg-purple-500 text-white px-6 py-2 rounded-lg hover:bg-purple-600 transition-colors">
-                      Connect Wallet
-                    </button>
-                  </div>
-                )} */}
-
-                {selectedPayment?.type === "netbanking" && (
-                  <div className="mb-6 p-6 bg-gray-50 rounded-xl text-center text-gray-700">
-                    <h3 className="text-lg font-semibold mb-2">Net Banking</h3>
-                    <p>You will be redirected to your bank's website to complete the payment.</p>
-                    <button className="mt-4 bg-purple-500 text-white px-6 py-2 rounded-lg hover:bg-purple-600 transition-colors">
-                      Proceed to Bank
-                    </button>
-                  </div>
-                )}
-
                 <div className="flex gap-4">
                   <button
                     onClick={() => setCurrentStep(1)}
@@ -638,11 +505,8 @@ const Checkout = ({
                 </div>
               </div>
             )}
-
-            {/* Step 3: Review Order */}
             {currentStep === 3 && (
               <div className="space-y-6">
-                {/* Order Items */}
                 <div className="bg-white rounded-2xl shadow-lg p-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">Order Items</h2>
                   <div className="space-y-4">
@@ -656,8 +520,6 @@ const Checkout = ({
                         <div className="flex-1">
                           <h3 className="font-semibold text-gray-900">{item.name}</h3>
                           <div className="flex items-center gap-4 text-sm text-gray-600">
-                            {/* <span>Size: {item.size}</span>
-                            <span>Color: {item.color}</span> */}
                             <span>Qty: {item.quantity}</span>
                           </div>
                           <div className="flex items-center mt-1">
@@ -666,10 +528,10 @@ const Checkout = ({
                           </div>
                         </div>
                       <div className="text-right">                    
-                        <div className="font-bold text-lg">${((item.price || item.finalPrice || item.initialPrice) * item.quantity).toFixed(2)}</div>
+                        <div className="font-bold text-lg">₹{((item.price || item.finalPrice || item.initialPrice) * item.quantity).toFixed(2)}</div>
                   {(item.originalPrice || item.initialPrice) > (item.price || item.finalPrice) && (
                     <div className="text-sm text-gray-500 line-through">
-                        ${(item.originalPrice || item.initialPrice * item.quantity).toFixed(2)}
+                        ₹{(item.originalPrice || item.initialPrice * item.quantity).toFixed(2)}
                     </div>
                   )}
                   </div>
@@ -677,8 +539,6 @@ const Checkout = ({
                     ))}
                   </div>
                 </div>
-
-                {/* Delivery Address */}
                 <div className="bg-white rounded-2xl shadow-lg p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-bold text-gray-900">Delivery Address</h2>
@@ -706,8 +566,6 @@ const Checkout = ({
                     </div>
                   )}
                 </div>
-
-                {/* Payment Method */}
                 <div className="bg-white rounded-2xl shadow-lg p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-bold text-gray-900">Payment Method</h2>
@@ -756,31 +614,15 @@ const Checkout = ({
                   >
                     {isLoading ? (
                       <>
-                        <svg
-                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" >
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" ></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" ></path>
                         </svg>
                         Placing Order...
                       </>
                     ) : (
                       <>
-                        Place Order • ${calculateTotal().toFixed(2)}
+                        Place Order • ₹{calculateTotal().toFixed(2)}
                         <CheckCircle className="w-5 h-5 ml-2" />
                       </>
                     )}
@@ -789,58 +631,36 @@ const Checkout = ({
               </div>
             )}
           </div>
-
-          {/* Order Summary Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Order Summary</h2>
-
-              {/* Price Breakdown */}
               <div className="space-y-3 mb-6">
               <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal ({cartItems.length} items)</span>
-                    <span className="font-semibold">${(calculateSubtotal() || 0).toFixed(2)}</span>
+                    <span className="font-semibold">₹{(calculateSubtotal() || 0).toFixed(2)}</span>
                 </div>
 
                 {appliedPromo && calculateDiscount() > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Discount ({appliedPromo.code})</span>
-                    <span>-${calculateDiscount().toFixed(2)}</span>
+                    <span>-₹{calculateDiscount().toFixed(2)}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping</span>
                   <span className="font-semibold">
-                    {calculateShipping() === 0 ? "Free" : `$${calculateShipping().toFixed(2)}`}
+                    {calculateShipping() === 0 ? "Free" : `₹${calculateShipping().toFixed(2)}`}
                   </span>
                 </div>
 
                 <div className="border-t pt-3">
                 <div className="flex justify-between text-xl font-bold">
                       <span>Total</span>
-                      <span className="text-purple-600">${(calculateTotal() || 0).toFixed(2)}</span>
+                      <span className="text-purple-600">₹{(calculateTotal() || 0).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
-
-              {/* Delivery Info */}
-              <div className="space-y-3 mb-6 p-4 bg-gray-50 rounded-xl">
-                <div className="flex items-center text-sm text-gray-600">
-                  <Truck className="w-4 h-4 mr-2 text-blue-500" />
-                  Free delivery on orders over $100
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <Shield className="w-4 h-4 mr-2 text-green-500" />
-                  Secure checkout with SSL encryption
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <Clock className="w-4 h-4 mr-2 text-purple-500" />
-                  Estimated delivery: 2-3 business days
-                </div>
-              </div>
-
-              {/* Mini Cart Items */}
               <div className="space-y-3">
                 <h3 className="font-semibold text-gray-900">Items in your order</h3>
                 {cartItems.slice(0, 3).map((item) => (
@@ -854,7 +674,7 @@ const Checkout = ({
                       <h4 className="text-sm font-medium text-gray-900 line-clamp-1">{item.name}</h4>
                       <p className="text-xs text-gray-600">Qty: {item.quantity}</p>
                     </div>
-                    <span className="text-sm font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                    <span className="text-sm font-semibold">₹{(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
                 {cartItems.length > 3 && (

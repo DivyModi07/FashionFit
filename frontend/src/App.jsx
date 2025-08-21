@@ -1,3 +1,5 @@
+// src/App.jsx
+
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
@@ -15,6 +17,8 @@ import TrendingPage from './pages/TrendingPage';
 import RecentlyViewedPage from './pages/RecentlyViewedPage';
 import AccountSettings from './pages/AccountSettings';
 import Checkout from "./pages/Checkout";
+import ScrollToTop from './components/ScrollToTop'; // 👈 1. Import the new component
+
 const App = () => {
   return (
     <CartWishlistProvider>
@@ -52,6 +56,7 @@ const App = () => {
           },
         }}
       />
+      <ScrollToTop /> {/* 👈 2. Add the component here */}
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />

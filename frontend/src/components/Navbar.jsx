@@ -1,9 +1,11 @@
+// src/components/Navbar.jsx
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Heart, ShoppingCart, User, Menu, X, Settings, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCartWishlist } from '../context/CartWishlistContext';
-import axios from 'axios';
+import axiosInstance from '../api/axios'; // 👈 1. Import your custom axiosInstance
+import { logoutUser } from '../api/auth'; // 👈 2. Import the logout utility
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -11,12 +13,10 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   
-  // --- NEW: State for user data and dropdown ---
   const [user, setUser] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -25,26 +25,26 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // --- NEW: Effect to fetch user data on load ---
   useEffect(() => {
     const fetchUserData = async () => {
       const token = localStorage.getItem('access_token');
       if (token) {
         try {
-          const response = await axios.get('http://127.0.0.1:8000/api/users/profile/', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          // 👈 3. Use axiosInstance to automatically handle token refresh.
+          // The Authorization header is now added automatically by the interceptor.
+          const response = await axiosInstance.get('/users/profile/');
           setUser(response.data);
         } catch (error) {
-          console.error("Failed to fetch user data, token might be expired.", error);
-          // Optional: handle token refresh or logout here
+          console.error("Failed to fetch user data. Session may be expired.", error);
+          // 👈 4. If fetching fails even after a refresh attempt, log the user out.
+          logoutUser();
+          setUser(null); // Ensure user state is cleared
         }
       }
     };
     fetchUserData();
   }, []);
 
-  // --- NEW: Effect to handle clicks outside the dropdown to close it ---
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -68,17 +68,12 @@ const Navbar = () => {
     setIsMenuOpen(false);
   };
   
-  // --- NEW: Function to handle user sign-out ---
   const handleSignOut = () => {
-    // Clear user state and tokens
+    logoutUser(); // Use the utility to clear tokens
     setUser(null);
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
     setIsDropdownOpen(false);
-    
-    // Navigate to login and reload for a clean state
     navigate('/login');
-    window.location.reload();
+    window.location.reload(); // Reload to ensure a clean state
   };
 
   return (
@@ -89,7 +84,6 @@ const Navbar = () => {
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
           <div className="flex items-center cursor-pointer" onClick={() => navigate('/homepage')}>
             <div className="flex-shrink-0 flex items-center">
               <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center transform hover:scale-110">
@@ -101,7 +95,6 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
             {menuItems.map((item) => (
               <button key={item.name} onClick={() => handleNav(item.path)} className="text-gray-700 hover:text-purple-600 font-medium relative group">
@@ -111,34 +104,29 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
             <button onClick={() => navigate('/wishlist')} className="p-2 text-gray-700 hover:text-purple-600 relative group">
               <Heart className="w-5 h-5" />
-              {wishlistCount > 0 && <span className="absolute -top-1 -right-1 ...">{wishlistCount}</span>}
+              {wishlistCount > 0 && <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">{wishlistCount}</span>}
             </button>
             <button onClick={() => navigate('/cart')} className="p-2 text-gray-700 hover:text-purple-600 relative group">
               <ShoppingCart className="w-5 h-5" />
-              {cartCount > 0 && <span className="absolute -top-1 -right-1 ...">{cartCount}</span>}
+              {cartCount > 0 && <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">{cartCount}</span>}
             </button>
 
-            {/* --- UPDATED: Conditional Account Button & Dropdown --- */}
             <div className="relative" ref={dropdownRef}>
               {user ? (
-                // If user is logged in, show their name and dropdown
                 <button onClick={() => setIsDropdownOpen(prev => !prev)} className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-medium">
                   <User className="w-4 h-4" />
                   <span>{user.first_name || user.email}</span>
                 </button>
               ) : (
-                // If user is not logged in, show a simple Login button
                 <button onClick={() => navigate('/login')} className="flex items-center space-x-2 bg-gray-200 text-gray-800 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-300">
                   <User className="w-4 h-4" />
                   <span>Login</span>
                 </button>
               )}
 
-              {/* Dropdown Menu */}
               {isDropdownOpen && user && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 animate-fade-in-up">
                   <button onClick={() => { navigate('/account-settings'); setIsDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
@@ -154,7 +142,6 @@ const Navbar = () => {
             </div>
           </div>
           
-          {/* Mobile Menu Button */}
           <div className="md:hidden">
             <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-gray-700 p-2">
               {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -163,7 +150,6 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Navigation Menu */}
       {isMenuOpen && (
         <div className="md:hidden bg-white/95 backdrop-blur-md border-t">
           <div className="px-4 py-6 space-y-6">
@@ -174,7 +160,6 @@ const Navbar = () => {
                 </button>
               ))}
             </div>
-            {/* ... other mobile actions ... */}
           </div>
         </div>
       )}

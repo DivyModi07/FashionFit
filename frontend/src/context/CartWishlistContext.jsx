@@ -19,6 +19,7 @@ export const CartWishlistProvider = ({ children }) => {
   const fetchCounts = async () => {
     try {
       const token = localStorage.getItem('access_token');
+      // 👈 FIX: Only fetch data if the user is potentially logged in.
       if (token) {
         const [cartData, wishlistData] = await Promise.all([
           getCart(),
@@ -27,12 +28,13 @@ export const CartWishlistProvider = ({ children }) => {
         setCartCount(cartData.length);
         setWishlistCount(wishlistData.length);
       } else {
+        // If no token, just set counts to 0 and do nothing.
         setCartCount(0);
         setWishlistCount(0);
       }
     } catch (error) {
       console.error('Error fetching counts:', error);
-      // Don't redirect here, just set counts to 0
+      // On error (like an expired token), also set counts to 0.
       setCartCount(0);
       setWishlistCount(0);
     }
@@ -42,14 +44,6 @@ export const CartWishlistProvider = ({ children }) => {
     fetchCounts();
   }, []);
 
-  const updateCartCount = (count) => {
-    setCartCount(count);
-  };
-
-  const updateWishlistCount = (count) => {
-    setWishlistCount(count);
-  };
-
   const refreshCounts = () => {
     fetchCounts();
   };
@@ -57,8 +51,6 @@ export const CartWishlistProvider = ({ children }) => {
   const value = {
     cartCount,
     wishlistCount,
-    updateCartCount,
-    updateWishlistCount,
     refreshCounts,
   };
 
