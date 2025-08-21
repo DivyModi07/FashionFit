@@ -1,6 +1,4 @@
-#####################
 # Python / Django
-#####################
 *.py[cod]
 __pycache__/
 *.sqlite3
@@ -17,17 +15,12 @@ staticfiles/
 *.env
 .env.*
 
-# Django migrations
-# **/migrations/
-# !*/migrations/__init__.py
 
 # Virtual environment
 venv/
 env/
 
-#####################
 # React / Node / Tailwind
-#####################
 frontend/node_modules/
 frontend/build/
 frontend/dist/
@@ -37,9 +30,7 @@ frontend/.cache/
 frontend/yarn.lock
 frontend/package-lock.json
 
-#####################
 # ML / Models
-#####################
 *.pt
 *.pth
 *.h5
@@ -48,12 +39,21 @@ frontend/package-lock.json
 models/
 checkpoints/
 
-#####################
 # OS / IDE files
-#####################
 .DS_Store
 .vscode/
 .idea/
 *.swp
 *.bak
 *.tmp
+
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Django media files
+/backend/fashion_backend/media/
+
+# .gitignore
+*.env
