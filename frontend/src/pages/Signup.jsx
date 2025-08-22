@@ -206,6 +206,14 @@ const Signup = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100">
       
       <Animation />
+      <button 
+  onClick={() => navigate(-1)}
+  className="absolute top-5 left-5 z-50 flex items-center justify-center w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-lg hover:bg-white transition-all duration-300 transform hover:scale-110"
+  aria-label="Go back"
+>
+  <ArrowLeft className="w-6 h-6 text-gray-700" />
+</button>
+
 
       {/* Custom animations */}
       <style jsx>{`

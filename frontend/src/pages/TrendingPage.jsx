@@ -40,7 +40,7 @@ const TrendingPage = () => {
             name: p.short_description || "Unnamed Product",
             brand: p.brand_name || "No Brand",
             description: p.short_description || "",
-            // 👈 FIX: Corrected property names to match ProductDetails
+            isOnSale: p.is_on_sale,
             finalPrice: Number(p.final_price) || 0,
             initialPrice: Number(p.initial_price) || 0,
             image: p.model_image || p.cutout_image || "/placeholder.svg",
@@ -159,7 +159,10 @@ const TrendingPage = () => {
                             <span className="text-sm text-gray-500 line-through">₹{product.initialPrice.toFixed(2)}</span>
                           </>
                         ) : (
-                          <span className="text-lg font-bold text-gray-900">₹{product.initialPrice.toFixed(2)}</span>
+                          <>
+                          <span className="text-lg font-bold text-red-600">₹{product.finalPrice.toFixed(2)}</span>
+                          <span className="text-sm text-gray-500 line-through">₹{product.initialPrice.toFixed(2)}</span>
+                          </>
                         )}
                       </div>
                       <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product.id); }} className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-2 rounded-full hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105">

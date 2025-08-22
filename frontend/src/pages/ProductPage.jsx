@@ -6,8 +6,8 @@ import Footer from '../components/Footer.jsx';
 import Animation from '../components/Animation.jsx';
 import axios from "axios";
 import CheckoutFlow from "./Checkout.jsx";
-import { useCartWishlist } from '../context/CartWishlistContext'; // 👈 1. IMPORT THE HOOK
-
+import { useCartWishlist } from '../context/CartWishlistContext'; 
+import { useNavigate } from "react-router-dom";
 const Notification = ({ message, show }) => {
   if (!show) return null;
   return (
@@ -31,6 +31,7 @@ const ProductPage = () => {
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     category: [],
     brand: [],
@@ -69,6 +70,11 @@ const ProductPage = () => {
   };
   
   const handleBuyNow = (item) => {
+      const token = localStorage.getItem('access_token');
+  if (!token) {
+    navigate('/login');
+    return;
+  }
     setItemToCheckout(item);
     setShowCheckout(true);
   };
@@ -607,7 +613,10 @@ const ProductPage = () => {
         onClose={closeProductDetails}
         onAddToCart={(id, options) => handleAddToCart(id, { ...options, price: selectedProduct?.isOnSale ? selectedProduct?.finalPrice : selectedProduct?.initialPrice })}
         onToggleWishlist={toggleWishlist}
-        onBuyNow={handleBuyNow}
+        onViewProduct={(product) => {
+        setSelectedProduct(product);
+        setIsProductDetailsOpen(true);
+      }}
       />
 
       <Footer />

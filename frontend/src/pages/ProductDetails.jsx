@@ -5,13 +5,13 @@ import { addToWishlist, removeFromWishlist, checkWishlistStatus, getWishlist } f
 import { addToCart } from '../api/cart'
 import { addRecentlyViewed } from '../utils/recentlyViewed';
 import { useCartWishlist } from "../context/CartWishlistContext"; 
-
+import { useNavigate } from "react-router-dom";
 const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlist, onBuyNow }) => {
   if (!isOpen || !product) {
     return null;
   }
   const { refreshCounts } = useCartWishlist(); 
-
+const navigate = useNavigate();
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -25,6 +25,31 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
   const [hasPurchased, setHasPurchased] = useState(false);
   const [showSizeChart, setShowSizeChart] = useState(false);
   const [showFullScreenImage, setShowFullScreenImage] = useState(false); // 👈 2. Add state for fullscreen view
+  const [reviews, setReviews] = useState([]);
+const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+
+
+useEffect(() => {
+  // Only fetch if the modal is open and we have a product ID
+  if (isOpen && product?.id) {
+    const fetchReviews = async () => {
+      setIsLoadingReviews(true);
+      try {
+        // This endpoint should return an array of reviews for the product
+        const response = await axios.get(`http://127.0.0.1:8000/api/products/${product.id}/reviews/`);
+        setReviews(response.data);
+      } catch (error) {
+        console.error("Failed to fetch reviews:", error);
+        setReviews([]); // Reset to empty on error
+      } finally {
+        setIsLoadingReviews(false);
+      }
+    };
+
+    fetchReviews();
+  }
+}, [isOpen, product?.id]);
+
 
   useEffect(() => {
     if (isOpen && product?.id) {
@@ -85,6 +110,22 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
   const [carouselIndex, setCarouselIndex] = useState(0);
   useEffect(() => { setCarouselIndex(0); }, [images.length, product]);
 
+
+  const handleBuyNowClick = () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        navigate('/login');
+        return;
+    }
+    // If logged in, call the original onBuyNow function
+    onBuyNow({ 
+      ...product, 
+      quantity: quantity, 
+      size: selectedSize, 
+      color: selectedColor 
+    });
+  };
+
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -95,6 +136,11 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
   };
 
   const handleTryOn = async () => {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+      navigate('/login');
+      return;
+  }
     if (!uploadedImage || !product) {
       setTryOnError("Please upload an image and select a product first");
       return;
@@ -161,13 +207,13 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Animated Backdrop */}
+      
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-md transition-all duration-300" 
         onClick={onClose} 
       />
 
-      {/* 👈 3. FULLSCREEN IMAGE OVERLAY */}
+      
       {showFullScreenImage && tryOnResult && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-lg" onClick={() => setShowFullScreenImage(false)}>
           <img src={tryOnResult} alt="Fullscreen Try-on Result" className="max-w-[90vw] max-h-[90vh] object-contain" />
@@ -469,7 +515,7 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
                     )}
                   </button>
                   <button
-                        onClick={() => onBuyNow({ 
+                        onClick={() => handleBuyNowClick({ 
                           ...product, 
                           quantity: quantity, 
                           size: selectedSize, 
@@ -559,11 +605,36 @@ const ProductDetails = ({ product, isOpen, onClose, onAddToCart, onToggleWishlis
                   </div>
                 </div>
               )}
-               {activeTab === "reviews" && (
-                <div className="space-y-8 p-8">
-                  <p className="text-center text-gray-600">No reviews available for this product yet.</p>
-                </div>
-              )}
+{activeTab === "reviews" && (
+  <div className="space-y-6 p-8">
+    <h3 className="text-2xl font-bold text-gray-900 text-center">Customer Reviews</h3>
+    {isLoadingReviews ? (
+      <p className="text-center text-gray-600">Loading reviews...</p>
+    ) : reviews.length > 0 ? (
+      reviews.map((review) => (
+        <div key={review.id} className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <p className="font-bold text-gray-800">{review.user_name || "Anonymous"}</p>
+            <span className="text-xs text-gray-400">{new Date(review.created_at).toLocaleDateString()}</span>
+          </div>
+          <div className="flex items-center my-1">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`w-4 h-4 mr-1 ${
+                  i < review.rating ? "text-yellow-400 fill-current" : "text-gray-300"
+                }`}
+              />
+            ))}
+          </div>
+          <p className="text-gray-700 mt-2">{review.comment}</p>
+        </div>
+      ))
+    ) : (
+      <p className="text-center text-gray-600 pt-4">No reviews available for this product yet.</p>
+    )}
+  </div>
+)}
             </div>
           </div>
         </div>

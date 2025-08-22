@@ -236,6 +236,15 @@ const ForgotPassword = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 overflow-hidden">
       <Animation count={25} />
 
+      {/* <button 
+  onClick={() => navigate(-1)}
+  className="absolute top-5 left-5 z-50 flex items-center justify-center w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-lg hover:bg-white transition-all duration-300 transform hover:scale-110"
+  aria-label="Go back"
+>
+  <ArrowLeft className="w-6 h-6 text-gray-700" />
+</button> */}
+
+
       {/* Custom animations */}
       <style jsx>{`
         @keyframes float {
@@ -299,30 +308,44 @@ const ForgotPassword = () => {
       `}</style>
 
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md shadow-lg sticky top-0 z-50 animate-slide-in-top">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse-slow">
-                <span className="text-white font-bold text-lg">F</span>
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent ml-2">
-                FashionAI
-              </span>
-            </div>
+{/* Replace the entire <header> with this */}
+<header className="bg-white/80 backdrop-blur-md shadow-lg sticky top-0 z-50 animate-slide-in-top">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="relative flex justify-between items-center h-16">
+      {/* Back Button */}
+      <div className="absolute left-0">
+        <button 
+          onClick={() => navigate(-1)}
+          className="flex items-center justify-center w-10 h-10 bg-white/50 rounded-full hover:bg-white transition-all duration-300"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="w-5 h-5 text-gray-700" />
+        </button>
+      </div>
 
-            <div className="flex items-center space-x-2">
-              <span className="text-gray-600">Remember your password?</span>
-              <button
-                onClick={() => navigate('/login')}
-                className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
-              >
-                Sign In
-              </button>
-            </div>
-          </div>
+      {/* Centered Logo */}
+      <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center">
+        <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+          <span className="text-white font-bold text-lg">FF</span>
         </div>
-      </header>
+        <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent ml-2">
+          FashionFit
+        </span>
+      </div>
+
+      {/* Right-aligned Links */}
+      <div className="ml-auto flex items-center space-x-2">
+        <span className="text-gray-600 hidden sm:inline">Remember password?</span>
+        <button
+          onClick={() => navigate('/login')}
+          className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
+        >
+          Sign In
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
 
       {/* Security Banner */}
       {/* <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white text-center py-3 animate-slide-in-top">
@@ -620,7 +643,7 @@ const ForgotPassword = () => {
           </div>
 
           {/* Help Section */}
-          <div className="text-center mt-8" data-animate id="help">
+          {/* <div className="text-center mt-8" data-animate id="help">
             <div
               className={`transition-all duration-700 delay-300 ${
                 isVisible["help"] ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
@@ -634,7 +657,7 @@ const ForgotPassword = () => {
                 Contact Support
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
