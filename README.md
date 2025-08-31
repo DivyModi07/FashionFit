@@ -23,6 +23,28 @@ A modern e-commerce platform with AI-powered virtual try-on and image search cap
 - User authentication
 - Responsive design
 
+## Technologies Used
+
+### Backend
+- Django REST Framework
+- FashionCLIP for image similarity
+- Hugging Face IDM-VTON for virtual try-on
+- PostgreSQL (recommended)
+
+### Frontend
+- React with Vite
+- Tailwind CSS
+- Axios for API calls
+- Lucide React for icons
+
+
+| Name          | Role                      | GitHub Profile |
+|---------------|---------------------------|----------------|
+| Urvi Patel    | Frontend Developer        | [@35-urvi](https://github.com/35-urvi) |
+| Divy Modi     | AI/ML Developer           | [@DivyModi07](https://github.com/DivyModi07) |
+| Jenil Patel   | Backend Developer         | [@jenil2006](https://github.com/jenil2006) |
+
+
 ## Setup
 
 ### Backend Setup
@@ -104,19 +126,7 @@ A modern e-commerce platform with AI-powered virtual try-on and image search cap
 3. View similar products found by AI
 4. Click the X button to clear search and return to all products
 
-## Technologies Used
 
-### Backend
-- Django REST Framework
-- FashionCLIP for image similarity
-- Hugging Face IDM-VTON for virtual try-on
-- PostgreSQL (recommended)
-
-### Frontend
-- React with Vite
-- Tailwind CSS
-- Axios for API calls
-- Lucide React for icons
 
 ## Notes
 
