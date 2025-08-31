@@ -37,6 +37,7 @@ A modern e-commerce platform with AI-powered virtual try-on and image search cap
 - Axios for API calls
 - Lucide React for icons
 
+## 👥 Contributors
 
 | Name          | Role                      | GitHub Profile |
 |---------------|---------------------------|----------------|
